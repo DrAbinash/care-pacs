@@ -37,6 +37,9 @@
     "DeleteWorklistsOnStableStudy": true
   },
 
+  "StorageDirectory": "/var/lib/orthanc/db",
+  "IndexDirectory": "/var/lib/orthanc/db",
+
   "DicomModalities": {
     "UIH_MRI": ["UIH", "172.16.1.103", 3333],
     "CT_MACHINE": ["ct99", "172.16.1.99", 4006],
