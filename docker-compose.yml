@@ -1,14 +1,25 @@
 name: care-pacs
 
+# Permanent architecture (2026-08):
+#   Modalities → Orthanc → OHIF
+#   care-erp-sync: Orthanc → ERP (study intake)
+#   Care ERP API: writes .wl into shared worklists (MWL)
+#   mwl-guard: quarantines invalid .wl BEFORE Orthanc housekeeper can crash
+#
 # Shared MWL folder with Care ERP (care-api mounts the same host path at
 # /orthanc-worklists via ORTHANC_WORKLIST_HOST_DIR). Create on NAS first:
 #   mkdir -p /volume1/docker/care-pacs/orthanc/worklists
+#   mkdir -p /volume1/docker/care-pacs/orthanc/worklists-bad
+#   mkdir -p /volume1/docker/care-pacs/orthanc/worklists-staging
 
 services:
   orthanc:
     image: orthancteam/orthanc:latest
     container_name: care-orthanc
     restart: unless-stopped
+    depends_on:
+      mwl-guard:
+        condition: service_healthy
     ports:
       - "5680:4242"   # DICOM C-STORE / C-ECHO / MWL C-FIND
       - "8042:8042"   # Orthanc web/API
@@ -19,6 +30,35 @@ services:
       # Antigravity MWL — Care API writes .wl files; Orthanc serves them to MRI/CT/USG
       - /volume1/docker/care-pacs/orthanc/worklists:/var/lib/orthanc/worklists
     command: ["/etc/orthanc/orthanc.json"]
+    networks:
+      - care-pacs-net
+
+  # Defense-in-depth: remove malformed ERP .wl files so Orthanc never terminates.
+  # Starts before Orthanc; continues polling while Orthanc runs.
+  mwl-guard:
+    image: python:3.11-slim
+    container_name: care-mwl-guard
+    restart: unless-stopped
+    environment:
+      MWL_WORKLIST_DIR: /var/lib/orthanc/worklists
+      MWL_QUARANTINE_DIR: /var/lib/orthanc/worklists-bad
+      MWL_GUARD_POLL_SECONDS: "2"
+      MWL_GUARD_STABLE_SECONDS: "1"
+      MWL_GUARD_READY_FILE: /tmp/mwl-guard-ready
+    volumes:
+      - /volume1/docker/care-pacs/mwl-guard:/app:ro
+      - /volume1/docker/care-pacs/orthanc/worklists:/var/lib/orthanc/worklists
+      - /volume1/docker/care-pacs/orthanc/worklists-bad:/var/lib/orthanc/worklists-bad
+    working_dir: /app
+    command: >-
+      sh -c "pip install --no-cache-dir -r requirements.txt &&
+             python mwl_guard.py"
+    healthcheck:
+      test: ["CMD", "test", "-f", "/tmp/mwl-guard-ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
     networks:
       - care-pacs-net
 
