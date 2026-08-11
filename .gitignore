@@ -22,7 +22,9 @@ orthanc/db/
 # ----- MODALITY WORKLISTS / PATIENT DATA -----
 orthanc/worklists/
 orthanc/worklists-bad/
+orthanc/worklists-staging/
 *.wl
+*.wl.reason.txt
 
 # ----- RUNTIME STATE -----
 *_state.json

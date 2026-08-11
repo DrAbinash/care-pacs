@@ -68,12 +68,19 @@ Use **Container Manager → Project**:
    `/volume1/docker/care-pacs/docker-compose.yml`.
 3. Build/start the project.
 4. Confirm these containers are running:
+   - `care-mwl-guard`
    - `care-orthanc`
    - `care-orthanc-puller`
    - `care-erp-sync`
    - `care-ohif`
    - `care-tailscale-ohif`
 5. Confirm that `care-watchtower` is absent.
+
+See also:
+- `docs/PERMANENT_ARCHITECTURE.md`
+- `docs/STORAGE_DISCOVERY.md`
+- `docs/VALIDATION.md`
+- `mwl-guard/README.md`
 
 ## Verification
 
