@@ -21,14 +21,51 @@ MRI / CT / USG / X-ray
                  │ validated / quarantined by care-mwl-guard
 ```
 
-## Root cause that this stack permanently addresses
+## Race model (honest)
 
-Orthanc's **Worklist Housekeeper** terminates Orthanc when a `.wl` file has an
-empty `StudyInstanceUID` / `SeriesInstanceUID` / `SOPInstanceUID`.
+**Primary guarantee = Care ERP** (companion repo):
 
-ERP historically wrote `(0020,000D) UI []`. That is fixed in Care ERP
-(`mwlWorklistWriter.ts`: generate numeric UIDs + atomic publish). This PACS
-repo adds **`care-mwl-guard`** so Orthanc still survives if a bad file appears.
+```
+generate dump → assertValidMwlDump()
+  → dump2dcm into worklists-staging/ (outside Orthanc watch)
+  → validate DICOM UIDs (dcmdump when available)
+  → atomic rename into worklists/*.wl  (same filesystem required)
+```
+
+**`care-mwl-guard` is defense-in-depth, not a race-free gate.**
+
+After Orthanc is running, the guard polls every ~2s. A malformed `.wl`
+that appears in `worklists/` can theoretically be read by Orthanc's
+housekeeper in the poll gap before quarantine. Do **not** treat the guard
+as making Orthanc completely safe under a hostile/broken writer.
+
+Startup is safer: Orthanc `depends_on: service_healthy`, and the guard
+only becomes healthy after the first crash-class sweep succeeds and
+runtime dirs are writable.
+
+## Guard quarantine policy
+
+| Class | Fields | Action |
+|-------|--------|--------|
+| **A — Crash** | Study/Series/SOP Instance UID empty/invalid; unreadable DICOM | **Quarantine** |
+| **B — Clinical** | SOPClassUID, ScheduledProcedureStepSequence, Modality | Warn only |
+| **C — CARE business** | AccessionNumber | Warn only |
+
+## Orthanc Worklists options
+
+`SetStudyInstanceUidIfMissing` and `DeleteWorklistsOnStableStudy` are valid
+on the modern Worklists plugin (Orthanc Book). Importantly:
+
+- **SetStudyInstanceUidIfMissing** applies to **REST API creates**, not to
+  repairing empty UIDs already present in filesystem `.wl` files. It does
+  **not** prevent housekeeper crashes on empty-UID files.
+- **DeleteWorklistsOnStableStudy** removes matched worklists after a stable
+  study arrives; it does not sanitize malformed files and does not hide
+  upstream generation bugs from operators (quarantine + ERP logs do).
+
+This stack keeps `"Database"` (plugin 0.9.x wording used in live Care logs).
+Newer docs may say `"Directory"` — do not rename without verifying the
+installed plugin.
 
 ## Component roles (permanent)
 

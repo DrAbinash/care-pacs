@@ -1,15 +1,28 @@
 # care-mwl-guard
 
-Permanent defense against Orthanc Worklist Housekeeper crashes.
+Defense-in-depth against Orthanc Worklist Housekeeper crashes.
 
-## What it does
+**Not a race-free gate after Orthanc is running.** Primary safety is Care ERP
+atomic publish. This service polls and may miss a brief window.
 
-1. On startup, scans `/var/lib/orthanc/worklists` for `*.wl`
-2. Validates Study/Series/SOP Instance UIDs + ScheduledProcedureStepSequence
-3. Moves invalid files to `/var/lib/orthanc/worklists-bad/` (never deletes)
-4. Writes a `.reason.txt` sidecar explaining why
-5. Marks healthy only after the first sweep (so Orthanc waits)
-6. Keeps polling every 2 seconds
+## Quarantine policy
+
+| Class | Condition | Action |
+|-------|-----------|--------|
+| A Crash | empty/invalid Study/Series/SOP Instance UID; unreadable DICOM | Quarantine → `worklists-bad/` |
+| B Clinical | missing SOPClassUID / SPS / Modality | Warn only |
+| C CARE business | missing AccessionNumber | Warn only |
+
+## Startup (fail-closed)
+
+1. Require worklists dir exists
+2. Require quarantine dir writable
+3. Startup sweep of crash-class files
+4. Write ready file → Orthanc `depends_on: service_healthy`
+5. Continue polling
+
+If pip/pydicom/install fails, ready file is never written → Orthanc does not start.
+
 
 ## NAS layout
 
