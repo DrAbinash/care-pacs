@@ -1,0 +1,68 @@
+services:
+  orthanc:
+    image: orthancteam/orthanc:latest
+    container_name: care-orthanc
+    restart: unless-stopped
+    labels:
+      - "com.centurylinklabs.watchtower.scope=care-pacs-stack"
+    ports:
+      - "5680:4242"
+      - "8042:8042"
+    volumes:
+      - /volume1/docker/care-pacs/orthanc/data:/var/lib/orthanc/db
+      - /volume1/docker/care-pacs/orthanc/config/orthanc.json:/etc/orthanc/orthanc.json:ro
+      - /volume1/docker/care-pacs/orthanc/scripts:/etc/orthanc/scripts:ro
+    command: ["/etc/orthanc/orthanc.json"]
+
+  orthanc-puller:
+    image: python:3.11-slim
+    container_name: care-orthanc-puller
+    restart: unless-stopped
+    depends_on:
+      - orthanc
+    volumes:
+      - /volume1/docker/care-pacs/orthanc-puller:/app
+    working_dir: /app
+    command: >
+      sh -c "pip install --no-cache-dir -r requirements.txt &&
+             python orthanc_auto_puller.py"
+
+  care-erp-sync:
+    image: python:3.11-slim
+    container_name: care-erp-sync
+    restart: unless-stopped
+    depends_on:
+      - orthanc
+    volumes:
+      - /volume1/docker/care-pacs/care-erp-sync:/app
+    working_dir: /app
+    command: >
+      sh -c "pip install --no-cache-dir -r requirements.txt &&
+             python care_erp_sync.py"
+
+  ohif:
+    build:
+      context: /volume1/docker/care-pacs/ohif/enterprise
+      dockerfile: Dockerfile
+      args:
+        OHIF_BRANCH: v3.10.0
+    image: care-ohif-enterprise:v1
+    container_name: care-ohif
+    restart: unless-stopped
+    depends_on:
+      - orthanc
+    ports:
+      - "3010:80"
+
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: care-watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_INTERVAL=86400
+      - WATCHTOWER_SCOPE=care-pacs-stack
+    labels:
+      - "com.centurylinklabs.watchtower.scope=care-pacs-stack"

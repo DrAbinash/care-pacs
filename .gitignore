@@ -1,0 +1,66 @@
+# ============================================================
+# CARE PACS
+# Track EVERYTHING except patient data, databases,
+# runtime state, secrets and disposable caches
+# ============================================================
+
+# ----- ORTHANC PATIENT DATA / DATABASE -----
+orthanc/data/
+orthanc/db/
+**/OrthancStorage/
+**/Orthanc.sqlite*
+*.sqlite
+*.sqlite3
+*.db
+
+# ----- DICOM / MEDICAL IMAGING DATA -----
+*.dcm
+*.dicom
+*.DCM
+*.DICOM
+
+# ----- MODALITY WORKLISTS / PATIENT DATA -----
+orthanc/worklists/
+orthanc/worklists-bad/
+*.wl
+
+# ----- RUNTIME STATE -----
+*_state.json
+
+# ----- TAILSCALE RUNTIME STATE -----
+tailscale-ohif/state/
+**/tailscale*/state/
+
+# ----- REAL SECRETS -----
+.env
+.env.*
+!.env.example
+
+*.pem
+*.key
+*.p12
+*.pfx
+
+# ----- LOGS / TEMP / CACHE -----
+*.log
+logs/
+**/logs/
+tmp/
+temp/
+*.tmp
+*.temp
+.cache/
+__pycache__/
+*.py[cod]
+
+# ----- LOCAL ENVIRONMENTS / DEPENDENCIES -----
+venv/
+.venv/
+env/
+node_modules/
+
+# ----- OS / EDITOR JUNK -----
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

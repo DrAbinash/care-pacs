@@ -1,0 +1,114 @@
+HOW TO GET THE OHIF VIEWER WORKING OVER HTTPS (via Tailscale)
+================================================================
+
+WHAT THIS DOES
+---------------
+Right now your OHIF viewer only works over plain "http://" on Tailscale
+(100.65.255.115:3010). Your ERP website loads over secure "https://", and
+web browsers refuse to show an insecure (http) viewer inside a secure
+(https) page — that's why the embedded viewer shows an error.
+
+These files add ONE new small container that gives OHIF a secure "https://"
+address on your Tailscale network, without changing anything else in your
+existing setup (Orthanc, OHIF, Watchtower all stay exactly as they are).
+
+
+FILES IN THIS FOLDER
+---------------------
+1. docker-compose.yml   — your existing file, with one new section added
+                           at the bottom (the "tailscale-ohif" service)
+2. serve.json            — tells the new container how to route traffic
+3. .env                  — where you'll paste one secret key (step 2 below)
+
+
+WHERE TO SAVE THEM ON YOUR NAS
+--------------------------------
+Your compose file actually lives at:
+  /volume1/docker/care-pacs/orthanc/docker-compose.yml
+(not directly in care-pacs — it's one folder deeper, inside "orthanc").
+That's fine — every path inside these files starts with "/volume1/..."
+(a "full address"), so it doesn't matter which folder the compose file
+itself sits in. Just use the paths below exactly as written:
+
+Using Synology File Station (or any way you normally copy files to the NAS):
+
+  docker-compose.yml   -> /volume1/docker/care-pacs/orthanc/docker-compose.yml
+                           (this REPLACES your current file at that same
+                           location — it has everything your old file had,
+                           plus the one new section)
+
+  serve.json            -> /volume1/docker/care-pacs/tailscale-ohif/serve.json
+                           (you'll need to create the "tailscale-ohif" folder
+                           first if it doesn't exist — create it directly
+                           inside "care-pacs", as a SIBLING of "orthanc",
+                           not inside the "orthanc" folder)
+
+  .env                   -> /volume1/docker/care-pacs/orthanc/.env
+                           (same folder as docker-compose.yml — this one
+                           matters, it must sit right next to the yml file)
+
+Also create an empty folder for Tailscale to save its login info into:
+  /volume1/docker/care-pacs/tailscale-ohif/state
+(File Station: right-click inside the tailscale-ohif folder -> Create Folder
+-> name it "state". It can stay empty, Tailscale fills it in automatically.)
+
+
+STEP-BY-STEP
+-------------
+
+STEP 1 — Turn on HTTPS for your Tailscale network (one-time, only if not
+already on):
+  a. Go to https://login.tailscale.com/admin/dns
+  b. Find "HTTPS Certificates" and make sure it's turned ON.
+
+STEP 2 — Get a secret key so the new container can join your Tailscale
+network:
+  a. Go to https://login.tailscale.com/admin/settings/keys
+  b. Click "Generate auth key"
+  c. Turn OFF "Ephemeral" (so the address doesn't change every restart)
+  d. Copy the key it gives you (starts with "tskey-auth-")
+  e. Open the .env file you saved and replace "paste-your-key-here" with
+     that key, then save.
+
+STEP 3 — Save all 3 files to the NAS paths listed above.
+
+STEP 4 — Start the new piece. Open a Terminal/SSH session on your Synology
+NAS (Control Panel -> Terminal & SNMP -> Enable SSH, then connect), and run:
+
+  cd /volume1/docker/care-pacs/orthanc
+  docker compose up -d tailscale-ohif
+
+STEP 5 — Get your new secure web address. Still in that terminal, run:
+
+  docker exec care-tailscale-ohif tailscale serve status
+
+It will print an address that looks like:
+
+  https://ohif-viewer.<something>.ts.net
+
+That whole address (starting with https://, no slash at the end) is what
+you need for the next step. Copy it exactly.
+
+STEP 6 — Tell the ERP about it:
+  a. Log into the ERP as an admin.
+  b. Go directly to this page: <your-erp-address>/radiology/settings
+     (or: Radiology & Imaging -> Settings Center, in the sidebar)
+  c. Open the "Viewers" tab.
+  d. Find the section titled "Network routes — reliable study launch".
+  e. Find the row labeled "Tailscale (VPN)".
+  f. In its "Viewer (OHIF) base URL" box, paste the https:// address from
+     Step 5 (no trailing slash).
+  g. Click "Test connection" next to that row — it should say "reachable".
+  h. Save (the page auto-saves each field as you leave it, or look for a
+     Save button at the top if your version has one).
+
+STEP 7 — Open a study in the Radiology Reporting Workspace and check the
+embedded viewer. It should now load the images directly on the page.
+
+
+IF SOMETHING GOES WRONG
+-------------------------
+Just send me:
+  - the output of: docker logs care-tailscale-ohif
+  - what you see on the screen (a screenshot is fine)
+and I'll figure out the next step with you.

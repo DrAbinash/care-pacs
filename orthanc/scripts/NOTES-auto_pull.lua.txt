@@ -1,0 +1,10 @@
+auto_pull.lua (uploaded) only logs OnStoredInstance — it does NOT push to Care ERP.
+
+Keep Orthanc→ERP sync exclusively in care_erp_sync.py (this pack).
+Do not reintroduce a Lua HTTP POST unless you disable care-erp-sync
+(avoid double intake).
+
+ERP URL note: Care is dual-homed (172.16.1.139 and 192.168.1.137).
+care_erp_sync.py keeps the currently working ERP_BASE_URL
+(http://172.16.1.139:8888). Probe both from inside care-erp-sync before
+changing; do not switch only because the alternate LAN address exists.
