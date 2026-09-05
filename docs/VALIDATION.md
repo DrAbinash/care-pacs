@@ -54,12 +54,18 @@ AFTER=$(curl -s http://127.0.0.1:8042/studies | python3 -c 'import sys,json; pri
 echo "studies after=$AFTER (before was $BEFORE)"
 ```
 
-## 6. OHIF
+## 6. OHIF (CARE Diagnostics Viewer)
 
 ```bash
 curl -sf -o /dev/null -w 'ohif:%{http_code}\n' http://127.0.0.1:3010/
+curl -sf -o /dev/null -w 'healthz:%{http_code}\n' http://127.0.0.1:3010/healthz
 curl -sf -o /dev/null -w 'qido:%{http_code}\n' 'http://127.0.0.1:3010/dicom-web/studies?limit=1'
+curl -sf http://127.0.0.1:3010/app-config.js | grep -E "CARE Diagnostics Viewer|qidoRoot"
+curl -sf http://127.0.0.1:3010/care/build-info.json
+# Expect qidoRoot '/dicom-web' (relative), not a hard-coded Tailscale IP.
 ```
+
+See also `docs/OHIF_CARE_CUSTOMIZATION.md`.
 
 ## 7. MWL guard
 

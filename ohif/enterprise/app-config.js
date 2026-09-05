@@ -1,46 +1,103 @@
-/* CARE Diagnostics OHIF config
-   This file MUST be served by OHIF at /app-config.js.
-   It intentionally uses window.config because the OHIF Docker image reads runtime config from window.config.
-*/
+/**
+ * CARE Diagnostics Viewer — OHIF v3.10 runtime configuration (active).
+ *
+ * Served as /app-config.js. Uses relative DICOMweb/WADO roots so the same
+ * build works on LAN (:3010) and Tailscale (serve → ohif:80) without baking
+ * a Tailscale IP into the image.
+ *
+ * Historical absolute Tailscale roots are preserved only in
+ * app-config--working.js (backup; not used by the Dockerfile).
+ *
+ * API notes (OHIF v3.10):
+ *   - Global is window.config
+ *   - whiteLabeling.createLogoComponentFn(React[, props]) must return a React node
+ *   - dataSources use @ohif/extension-default.dataSourcesModule.dicomweb
+ */
 window.config = {
   routerBasename: '/',
   showStudyList: true,
   maxNumberOfWebWorkers: 3,
+  showWarningMessageForCrossOrigin: true,
+  showCPUFallbackMessage: true,
+  showLoadingIndicator: true,
+  strictZSpacingForVolumeViewport: true,
 
-  // Important: prevent OHIF from trying to load configUrl dynamically.
+  // Browser / OS title hint (CARE chrome also enforces document.title).
+  softApplicationName: 'CARE Diagnostics Viewer',
+
+  investigationalUseDialog: {
+    option: 'never',
+  },
+
   dangerouslyUseDynamicConfig: {
     enabled: false,
   },
 
+  // Supported OHIF white-label hook (v3.10). Text only — no graphic logo asset.
+  whiteLabeling: {
+    createLogoComponentFn: function (React) {
+      return React.createElement(
+        'div',
+        {
+          className: 'care-ohif-logo',
+          title: 'CARE Diagnostics Viewer',
+          style: {
+            color: '#e8eef7',
+            fontSize: '14px',
+            fontWeight: 600,
+            letterSpacing: '0.02em',
+            paddingLeft: '8px',
+            whiteSpace: 'nowrap',
+          },
+        },
+        'CARE Diagnostics Viewer'
+      );
+    },
+  },
+
+  defaultDataSourceName: 'orthanc',
   dataSources: [
     {
       namespace: '@ohif/extension-default.dataSourcesModule.dicomweb',
       sourceName: 'orthanc',
       configuration: {
-        friendlyName: 'Care Diagnostics Orthanc',
+        friendlyName: 'CARE Diagnostics Orthanc',
         name: 'orthanc',
-        qidoRoot: 'http://100.65.255.115:3010/dicom-web',
-        wadoRoot: 'http://100.65.255.115:3010/dicom-web',
-        wadoUriRoot: 'http://100.65.255.115:3010/wado',
-        qidoSupportsIncludeField: true, // FIXED: Changed from false to true
+        // Same-origin relative roots — nginx in this image proxies to Orthanc.
+        // Path prefix matches Orthanc DicomWeb.Root (/dicom-web/) and the
+        // previously working absolute URL path on :3010.
+        qidoRoot: '/dicom-web',
+        wadoRoot: '/dicom-web',
+        wadoUriRoot: '/wado',
+        qidoSupportsIncludeField: true,
         supportsReject: false,
-        supportsStow: true,
-        supportsFuzzyMatching: false,
-        supportsWildcard: true,
-        enableStudyLazyLoad: true,
+        dicomUploadEnabled: true,
         imageRendering: 'wadors',
         thumbnailRendering: 'wadors',
+        enableStudyLazyLoad: true,
+        supportsFuzzyMatching: false,
+        supportsWildcard: true,
+        omitQuotationForMultipartRequest: true,
+        bulkDataURI: {
+          enabled: true,
+          relativeResolution: 'studies',
+        },
       },
     },
   ],
 
-  defaultDataSourceName: 'orthanc',
   customizationService: {},
-  cornerstoneExtensionConfig: {},
   extensions: [],
   modes: [],
-};
 
-// Extra aliases are harmless and help if a cached OHIF build looks for alternate globals.
-window.__APP_CONFIG__ = window.config;
-window.appConfig = window.config;
+  /**
+   * CARE-owned viewer integration settings (read by /care/care-config.js).
+   * Keep PHI out of this object. No secrets.
+   */
+  care: {
+    viewerName: 'CARE Diagnostics Viewer',
+    defaultReturnUrl: '',
+    erpOriginAllowlist: [],
+    returnUrlAllowlist: [],
+  },
+};
