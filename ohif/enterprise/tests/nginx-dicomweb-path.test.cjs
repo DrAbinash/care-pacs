@@ -61,8 +61,9 @@ function curlRaw(url, extraArgs = []) {
 }
 
 (async () => {
-  assert.match(CONF_SRC, /proxy_pass http:\/\/orthanc:8042;/);
-  assert.doesNotMatch(CONF_SRC, /proxy_pass http:\/\/\$/);
+  assert.match(CONF_SRC, /set \$orthanc_upstream orthanc:8042;/);
+  assert.match(CONF_SRC, /proxy_pass http:\/\/\$orthanc_upstream;/);
+  assert.doesNotMatch(CONF_SRC, /proxy_pass http:\/\/\$orthanc_upstream\//);
   assert.doesNotMatch(CONF_SRC, /proxy_pass http:\/\/orthanc:8042\//);
 
   const upstreamPort = await freePort();
@@ -176,10 +177,25 @@ ThreadingHTTPServer(("0.0.0.0", PORT), H).serve_forever()
   fs.writeFileSync(path.join(html, "app-config.js"), "window.config={};");
   fs.writeFileSync(path.join(html, "care", "build-info.json"), "{}");
 
-  let conf = CONF_SRC.replace(/orthanc:8042/g, `host.docker.internal:${upstreamPort}`);
+  // Variable proxy_pass resolves via nginx resolver (Docker DNS), which does
+  // NOT consult /etc/hosts — so host.docker.internal would fail. Use the
+  // docker0 bridge gateway IP, which reaches the host-bound Python mock.
+  const gw = sh("sudo", [
+    "docker",
+    "network",
+    "inspect",
+    "bridge",
+    "--format",
+    "{{(index .IPAM.Config 0).Gateway}}",
+  ]);
+  const gatewayIp = (gw.stdout || "").trim();
+  assert.match(gatewayIp, /^\d+\.\d+\.\d+\.\d+$/, "docker bridge gateway");
+
+  let conf = CONF_SRC.replace(/orthanc:8042/g, `${gatewayIp}:${upstreamPort}`);
   conf = conf.replace(/proxy_connect_timeout\s+300;/g, "proxy_connect_timeout 5;");
   conf = conf.replace(/proxy_send_timeout\s+300;/g, "proxy_send_timeout 5;");
   conf = conf.replace(/proxy_read_timeout\s+300;/g, "proxy_read_timeout 5;");
+  // Host header can stay as the rewritten address (mock ignores it).
   const confPath = path.join(tmp, "default.conf");
   fs.writeFileSync(confPath, conf);
 
@@ -191,7 +207,6 @@ ThreadingHTTPServer(("0.0.0.0", PORT), H).serve_forever()
     "-d",
     "--name",
     NGX,
-    "--add-host=host.docker.internal:host-gateway",
     "-p",
     `${httpPort}:80`,
     "-v",

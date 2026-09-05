@@ -55,9 +55,12 @@ assert.match(dockerfile, /COPY default\.conf/);
 const nginx = fs.readFileSync(path.join(enterprise, "default.conf"), "utf8");
 assert.match(nginx, /location = \/healthz/);
 assert.match(nginx, /location \/dicom-web/);
-assert.match(nginx, /proxy_pass http:\/\/orthanc:8042;/);
+assert.match(nginx, /set \$orthanc_upstream orthanc:8042;/);
+assert.match(nginx, /proxy_pass http:\/\/\$orthanc_upstream;/);
 assert.match(nginx, /Host orthanc:8042/);
-assert.doesNotMatch(nginx, /proxy_pass http:\/\/\$/);
+assert.match(nginx, /resolver 127\.0\.0\.11/);
+// Variable upstream is URI-less (no path after host) — path+query preserved.
+assert.doesNotMatch(nginx, /proxy_pass http:\/\/\$orthanc_upstream\//);
 assert.doesNotMatch(nginx, /proxy_pass http:\/\/orthanc:8042\//);
 
 const runtimeCfg = fs.readFileSync(

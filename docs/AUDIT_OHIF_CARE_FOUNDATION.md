@@ -74,9 +74,12 @@ Legend: **FACT** = verified in this repository / upstream API; **ASSUMPTION** = 
 - Nginx proxies `/dicom-web` → Orthanc DICOMweb root `/dicom-web/` and `/wado` → `/wado`.
 - Active `app-config.js` uses **relative** `/dicom-web` and `/wado` (this branch).
 - Historical absolute roots remain only in `app-config--working.js` (backup).
-- **FACT (lab):** nginx URI-less `proxy_pass http://orthanc:8042;` preserves path + query
-  against a mock Orthanc upstream (`ohif/enterprise/tests/nginx-dicomweb-path.test.cjs`),
-  including studies, metadata, multipart frames, trailing slash, and WADO-URI.
+- **FACT (lab):** nginx uses URI-less `proxy_pass http://$orthanc_upstream;` (variable +
+  Docker DNS resolver) so Orthanc is resolved per-request — `/healthz` stays up when
+  Orthanc is absent, while path + query are preserved against a mock Orthanc upstream
+  (`ohif/enterprise/tests/nginx-dicomweb-path.test.cjs`: studies, metadata, multipart
+  frames, trailing slash, WADO-URI). A literal `proxy_pass http://orthanc:8042;` was
+  rejected because nginx then fails to start when Orthanc DNS is missing.
 - **ASSUMPTION (confirm on Synology):** Relative roots work for both LAN
   (`http://<nas-lan>:3010`) and Tailscale (`serve.json` proxies `/` to `http://ohif:80`)
   against the real Orthanc with clinical studies.
