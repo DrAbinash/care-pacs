@@ -8,9 +8,9 @@
  * Historical absolute Tailscale roots are preserved only in
  * app-config--working.js (backup; not used by the Dockerfile).
  *
- * API notes (OHIF v3.10):
+ * API notes (OHIF v3.10 / commit 0b6e9cba7613dba1df883985d3c821a86b3ba0ff):
  *   - Global is window.config
- *   - whiteLabeling.createLogoComponentFn(React[, props]) must return a React node
+ *   - whiteLabeling.createLogoComponentFn(React[, props]) returns a React node
  *   - dataSources use @ohif/extension-default.dataSourcesModule.dicomweb
  */
 window.config = {
@@ -21,9 +21,6 @@ window.config = {
   showCPUFallbackMessage: true,
   showLoadingIndicator: true,
   strictZSpacingForVolumeViewport: true,
-
-  // Browser / OS title hint (CARE chrome also enforces document.title).
-  softApplicationName: 'CARE Diagnostics Viewer',
 
   investigationalUseDialog: {
     option: 'never',
