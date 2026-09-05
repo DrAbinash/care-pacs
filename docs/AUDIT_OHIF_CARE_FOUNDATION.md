@@ -74,9 +74,12 @@ Legend: **FACT** = verified in this repository / upstream API; **ASSUMPTION** = 
 - Nginx proxies `/dicom-web` → Orthanc DICOMweb root `/dicom-web/` and `/wado` → `/wado`.
 - Active `app-config.js` uses **relative** `/dicom-web` and `/wado` (this branch).
 - Historical absolute roots remain only in `app-config--working.js` (backup).
-- **ASSUMPTION (high confidence, confirm on Synology):** Relative roots work for both LAN
-  (`http://<nas-lan>:3010`) and Tailscale (`serve.json` proxies `/` to `http://ohif:80`),
-  because the browser origin is always the viewer host and nginx performs the Orthanc hop.
+- **FACT (lab):** nginx URI-less `proxy_pass http://orthanc:8042;` preserves path + query
+  against a mock Orthanc upstream (`ohif/enterprise/tests/nginx-dicomweb-path.test.cjs`),
+  including studies, metadata, multipart frames, trailing slash, and WADO-URI.
+- **ASSUMPTION (confirm on Synology):** Relative roots work for both LAN
+  (`http://<nas-lan>:3010`) and Tailscale (`serve.json` proxies `/` to `http://ohif:80`)
+  against the real Orthanc with clinical studies.
 
 ## 6. LAN and Tailscale reach the same viewer
 
@@ -97,10 +100,14 @@ Legend: **FACT** = verified in this repository / upstream API; **ASSUMPTION** = 
 **Decision (this PR)**
 
 - **No custom mode** yet — default longitudinal mode remains.
-- **CARE customisation module** (repo-owned classic scripts + `app-config.js` white-label),
-  copied into the image at build time and injected into `index.html` by a fail-loud script.
+- **Build-time static integration layer** (repo-owned classic scripts + `app-config.js`
+  white-label), copied into `dist/` and injected into compiled `index.html` by a fail-loud
+  script. **Not** a registered OHIF/Cornerstone extension (deferred to a later PR).
 - Avoid vendoring the OHIF monorepo; pin immutable commit.
 - No OHIF core source patches in this PR (`patches/` reserved and empty of patch files).
+- Behavioural app-config hygiene: do **not** set `investigationalUseDialog: never`,
+  `strictZSpacingForVolumeViewport`, or `dicomUploadEnabled: true` in this foundation.
+  Keep Orthanc compatibility flags `omitQuotationForMultipartRequest` + `bulkDataURI`.
 
 ## 9. Build / config / smoke-test gaps (pre-foundation)
 

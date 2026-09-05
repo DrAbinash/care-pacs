@@ -1,11 +1,14 @@
 /**
  * CARE Diagnostics Viewer — ERP integration bridge (v1).
  *
- * Contract (viewer ↔ CARE ERP parent frame):
+ * This is a build-time static integration layer (script tags injected into
+ * compiled index.html). It is NOT a registered OHIF/Cornerstone extension.
+ *
+ * Contract (viewer ↔ CARE ERP parent/opener):
  *   ERP → viewer:
  *     { type: "care.viewer.requestContext", requestId?: string }
  *     { type: "care.viewer.ping", requestId?: string }
- *   viewer → ERP (only to event.origin when allowlisted):
+ *   viewer → ERP (only to event.origin when allowlisted AND source is parent/opener):
  *     { type: "care.viewer.context", version: 1, studyInstanceUID, seriesInstanceUID,
  *       sopInstanceUID, frameNumber, viewerName, hrefPath, requestId? }
  *     { type: "care.viewer.pong", version: 1, requestId? }
@@ -13,8 +16,9 @@
  *
  * Security:
  *   - Never uses targetOrigin "*"
- *   - Only replies to allowlisted origins from window.config.care.erpOriginAllowlist
- *   - Never sends PHI (patient name, phone, pixel data, etc.)
+ *   - Empty erpOriginAllowlist ⇒ fail closed (no replies)
+ *   - Only parent frame or window.opener may request context
+ *   - Never sends PHI (patient name/id/accession/phone/pixels)
  *   - Works standalone when no ERP parent exists
  *
  * Depends on: care-security.js (window.CARE_SECURITY)
@@ -86,6 +90,7 @@
   function reply(event, payload) {
     if (!event || !event.source || typeof event.source.postMessage !== "function") return;
     if (!SEC.isOriginAllowlisted(event.origin, allowlist())) return;
+    if (!SEC.isTrustedMessageSource(event, window)) return;
     try {
       event.source.postMessage(payload, event.origin);
     } catch (err) {
@@ -96,6 +101,7 @@
   function onMessage(event) {
     if (!event || !event.data || typeof event.data !== "object") return;
     if (!SEC.isOriginAllowlisted(event.origin, allowlist())) return;
+    if (!SEC.isTrustedMessageSource(event, window)) return;
 
     var type = event.data.type;
     var requestId = event.data.requestId;

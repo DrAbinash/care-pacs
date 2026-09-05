@@ -61,6 +61,8 @@ services:
       - orthanc
     ports:
       - "3010:80"
+    volumes:
+      - ./ohif/enterprise/care-customization/care-config.runtime.js:/usr/share/nginx/html/care/care-config.js:ro
     healthcheck:
       test:
         [

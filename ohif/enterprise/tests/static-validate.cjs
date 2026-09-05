@@ -24,6 +24,7 @@ const jsFiles = [
   "care-customization/care-bridge.js",
   "care-customization/care-chrome.js",
   "care-customization/care-config.js",
+  "care-customization/care-config.runtime.js",
 ].map((f) => path.join(enterprise, f));
 
 for (const f of jsFiles) {
@@ -34,12 +35,15 @@ for (const f of jsFiles) {
 const appConfig = fs.readFileSync(path.join(enterprise, "app-config.js"), "utf8");
 assert.match(appConfig, /CARE Diagnostics Viewer/);
 assert.match(appConfig, /window\.config\s*=/);
-assert.match(appConfig, /qidoRoot:\s*'\/dicom-web'/);
-assert.match(appConfig, /wadoUriRoot:\s*'\/wado'/);
+assert.match(appConfig, /qidoRoot:\s*['\"]\/dicom-web['\"]/);
+assert.match(appConfig, /wadoUriRoot:\s*['\"]\/wado['\"]/);
 assert.doesNotMatch(appConfig, /100\.65\.255\.115/);
 assert.match(appConfig, /whiteLabeling/);
 assert.match(appConfig, /createLogoComponentFn/);
 assert.match(appConfig, /erpOriginAllowlist/);
+assert.match(appConfig, /dicomUploadEnabled:\s*false/);
+assert.doesNotMatch(appConfig, /investigationalUseDialog/);
+assert.doesNotMatch(appConfig, /strictZSpacingForVolumeViewport/);
 
 const dockerfile = fs.readFileSync(path.join(enterprise, "Dockerfile"), "utf8");
 assert.match(dockerfile, new RegExp(`OHIF_COMMIT=${PIN}`));
@@ -51,9 +55,17 @@ assert.match(dockerfile, /COPY default\.conf/);
 const nginx = fs.readFileSync(path.join(enterprise, "default.conf"), "utf8");
 assert.match(nginx, /location = \/healthz/);
 assert.match(nginx, /location \/dicom-web/);
-assert.match(nginx, /resolver 127\.0\.0\.11/);
-assert.match(nginx, /orthanc:8042/);
-assert.match(nginx, /proxy_pass http:\/\/\$orthanc_upstream/);
+assert.match(nginx, /proxy_pass http:\/\/orthanc:8042;/);
+assert.match(nginx, /Host orthanc:8042/);
+assert.doesNotMatch(nginx, /proxy_pass http:\/\/\$/);
+assert.doesNotMatch(nginx, /proxy_pass http:\/\/orthanc:8042\//);
+
+const runtimeCfg = fs.readFileSync(
+  path.join(enterprise, "care-customization", "care-config.runtime.js"),
+  "utf8"
+);
+assert.match(runtimeCfg, /window\.config\.care/);
+assert.match(runtimeCfg, /erpOriginAllowlist/);
 
 const compose = path.join(root, "docker-compose.yml");
 const dc = spawnSync("docker", ["compose", "-f", compose, "config"], {
@@ -66,6 +78,7 @@ if (dc.status !== 0) {
 } else {
   assert.match(dc.stdout, /care-ohif/);
   assert.match(dc.stdout, new RegExp(PIN));
+  assert.match(dc.stdout, /care-config\.js/);
   console.log("docker compose config: OK");
 }
 

@@ -1,14 +1,19 @@
 /**
  * Optional runtime overrides for CARE integration allowlists.
- * Prefer configuring via window.config.care in app-config.js.
- * This file lets operators drop NAS-local allowlists without rebuilding OHIF
- * (still no secrets / PHI). Merges into window.config.care when present.
+ *
+ * Prefer window.config.care in app-config.js for image defaults.
+ * When Compose mounts this file over /care/care-config.js (see docker-compose.yml),
+ * operators can update allowlists without rebuilding the OHIF image.
+ *
+ * No secrets. No PHI. Empty allowlists remain fail-closed.
+ *
+ * This is a static script integration — not an OHIF extension registration.
  */
 (function () {
   "use strict";
 
   window.careConfig = window.careConfig || {
-    // Example (disabled by default — configure on the NAS if needed):
+    // Example (disabled by default — enable via mounted override on the NAS):
     // erpOriginAllowlist: ["https://care-erp.example"],
     // returnUrlAllowlist: ["https://care-erp.example"],
     // defaultReturnUrl: "https://care-erp.example/radiology",

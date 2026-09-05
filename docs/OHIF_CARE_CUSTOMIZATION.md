@@ -24,6 +24,32 @@ Modalities → Orthanc (:8042 DICOM :4242)
 Pinned upstream: OHIF **v3.10.0** commit `0b6e9cba7613dba1df883985d3c821a86b3ba0ff`.  
 Image tag: `care-ohif-enterprise:v1`.
 
+## Integration model (important)
+
+CARE scripts are a **build-time static integration layer**:
+they are copied into the OHIF `dist/` tree and injected into compiled
+`index.html` by `scripts/inject-care-customization.sh`.
+
+They are **not** a registered OHIF extension / mode / Cornerstone module.
+A true Cornerstone-aware OHIF extension is intentionally deferred to a later PR.
+
+Script load order in `index.html`:
+1. OHIF loads `/app-config.js` (head / webpack template) first
+2. OHIF application bundles boot
+3. Near `</body>`, CARE injects: `care-security.js` → `care-config.js` →
+   `build-info.js` → `care-bridge.js` → `care-chrome.js`
+
+Missing CARE files or failed injection **fail the Docker build**.
+
+### Runtime allowlists without rebuild
+
+Compose bind-mounts
+`ohif/enterprise/care-customization/care-config.runtime.js` over
+`/care/care-config.js` (read-only). That host file **must** set
+`window.careConfig` **and** merge into `window.config.care` (it replaces the
+image’s baked `care-config.js`). Edit allowlists there; empty remain fail-closed.
+Do not put secrets in this file.
+
 ## Where CARE customisations live
 
 | Path | Role |

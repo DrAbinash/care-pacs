@@ -109,6 +109,10 @@ services:
       - orthanc
     ports:
       - "3010:80"
+    volumes:
+      # Optional runtime allowlist overrides (no secrets). Image ships a fail-closed default;
+      # replace/edit this host file on the NAS without rebuilding OHIF.
+      - ./ohif/enterprise/care-customization/care-config.runtime.js:/usr/share/nginx/html/care/care-config.js:ro
     # Image also defines HEALTHCHECK; compose healthcheck mirrors viewer + config only.
     healthcheck:
       test:

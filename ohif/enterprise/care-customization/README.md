@@ -13,6 +13,11 @@ Repo-owned assets copied into the OHIF build output by
 
 See `docs/OHIF_CARE_CUSTOMIZATION.md` for architecture, schema, build, and rollback.
 
+## Important
+
+This folder is a **static build-time integration layer**, not a registered
+OHIF extension. Scripts are injected into compiled `index.html`.
+
 ## Design choice
 
 **Configuration + injected CARE scripts** (not a full OHIF React extension/mode).
