@@ -1,56 +1,29 @@
-CARE OHIF ENTERPRISE BUILD - STEPS
+CARE OHIF ENTERPRISE — BUILD NOTES
 
-IMPORTANT:
-This builds OHIF from official source. It needs internet on NAS and may take 20-40 minutes the first time.
-Orthanc config/data are unchanged.
+Superseded by docs/OHIF_CARE_CUSTOMIZATION.md for day-to-day operations.
+Kept so historical NAS instructions remain discoverable.
 
-1. Create folder:
-sudo mkdir -p /volume1/docker/care-pacs/ohif/enterprise
+Active files in this directory:
+  - Dockerfile (pins OHIF commit; injects CARE customisation)
+  - app-config.js (active runtime config — relative /dicom-web and /wado)
+  - default.conf (nginx)
+  - care-customization/ (CARE-owned scripts)
+  - scripts/ (inject + build metadata)
+  - patches/ (reserved; empty of patch files)
+  - tests/
 
-2. Copy these files into:
-   /volume1/docker/care-pacs/ohif/enterprise/
-   - Dockerfile
-   - app-config.js
-   - default.conf
+Historical (not used by the Dockerfile):
+  - app-config--working.js
 
-3. Backup existing compose:
-cd /volume1/docker/care-pacs/orthanc
-sudo cp docker-compose.yml docker-compose.before-enterprise.yml
+Quick rebuild (from repo root on the NAS — never down -v):
 
-4. Copy included docker-compose.yml to:
-   /volume1/docker/care-pacs/orthanc/docker-compose.yml
+  cd /volume1/docker/care-pacs
+  docker compose build ohif
+  docker compose up -d ohif
 
-5. Stop Watchtower while testing:
-sudo docker compose stop watchtower
+  curl -sf http://127.0.0.1:3010/healthz
+  curl -sf http://127.0.0.1:3010/app-config.js | head
+  curl -sf 'http://127.0.0.1:3010/dicom-web/studies?limit=1' | head
 
-6. Remove old OHIF container only:
-sudo docker compose stop ohif
-sudo docker compose rm -f ohif
-
-7. Build CARE OHIF:
-sudo docker compose build --no-cache ohif
-
-8. Start:
-sudo docker compose up -d ohif
-
-9. Test:
-curl http://localhost:3010/app-config.js | head
-curl http://localhost:3010/dicom-web/studies | head
-curl "http://localhost:3010/dicom-web/studies?limit=10&offset=0" | head
-sudo docker logs care-ohif --tail=50
-
-10. Open:
-http://100.65.255.115:3010
-
-11. Browser cleanup:
-DevTools > Application > Service Workers > Unregister
-Application > Storage > Clear site data
-Ctrl + Shift + R
-
-Expected:
-Only CARE Orthanc studies should appear. Demo patients like Horse/Water Phantom should not appear.
-
-Rollback:
-cd /volume1/docker/care-pacs/orthanc
-sudo cp docker-compose.before-enterprise.yml docker-compose.yml
-sudo docker compose up -d
+Rollback: retag previous care-ohif-enterprise image to :v1 and
+  docker compose up -d ohif
