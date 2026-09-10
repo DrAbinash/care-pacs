@@ -46,7 +46,9 @@
     "weasis-clinic": ["weasis123", "172.16.1.140", 11113],
     "weasis-su": ["weasissu", "172.16.1.141", 11113],
     "GE-Voluson-E9": ["Voluson", "172.16.1.46", 104],
-    "XRAY_1": ["film plus", "172.16.1.80", 105],
-    "XRAY_2": ["film plus", "172.16.1.90", 105]
+    "XRAY_1": ["FILMPLUS", "172.16.1.80", 105],
+    "XRAY_2": ["FILMPLUS", "192.168.1.150", 105],
+    "XRAY_3": ["FILMPLUS", "192.168.1.90", 105],
+    "XRAY_4": ["FILMPLUS", "172.16.1.91", 105]
   }
 }

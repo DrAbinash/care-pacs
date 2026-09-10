@@ -77,6 +77,27 @@ services:
     networks:
       - care-pacs-net
 
+  orthanc-retention:
+    image: python:3.11-slim
+    container_name: care-orthanc-retention
+    restart: unless-stopped
+    depends_on:
+      - orthanc
+    environment:
+      ORTHANC_URL: http://care-orthanc:8042
+      KEEP_STUDIES: "500"
+      CLEANUP_TRIGGER: "520"
+      CHECK_INTERVAL_SECONDS: "300"
+      MIN_STUDY_AGE_MINUTES: "60"
+    volumes:
+      - /volume1/docker/care-pacs/orthanc-retention:/app:ro
+    working_dir: /app
+    command: >-
+      sh -c "pip install --no-cache-dir -r requirements.txt &&
+             python orthanc_retention.py"
+    networks:
+      - care-pacs-net
+
   care-erp-sync:
     image: python:3.11-slim
     container_name: care-erp-sync
