@@ -66,3 +66,16 @@ node_modules/
 Thumbs.db
 .vscode/
 .idea/
+
+# CARE PACS local runtime / backups
+postgres/data/
+*.BACKUP-*
+*.tar.gz
+*.zip
+docker-compose1.yml
+orthanc/config/*.before-*
+orthanc-puller/*--before-*.py
+orthanc-puller/*--WORKING-*.py
+orthanc-puller/*_V2_FAIR_RESTART_SAFE.py
+orthanc-puller/orthanc_auto_puller1.py
+ohif/config/app-config--working-tailscale.js

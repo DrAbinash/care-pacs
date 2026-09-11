@@ -3,18 +3,15 @@
   "DicomAet": "ORTHANC2",
   "DicomPort": 4242,
   "HttpPort": 8042,
-
   "RemoteAccessAllowed": true,
   "AuthenticationEnabled": false,
-
   "Plugins": [
     "/usr/share/orthanc/plugins-available/libOrthancDicomWeb.so",
-    "/usr/share/orthanc/plugins-available/libOrthancWorklists.so"
+    "/usr/share/orthanc/plugins-available/libOrthancWorklists.so",
+    "/usr/share/orthanc/plugins-available/libOrthancPostgreSQLIndex.so"
   ],
-
   "DicomAlwaysAllowStore": true,
   "DicomCheckCalledAet": false,
-
   "DicomWeb": {
     "Enable": true,
     "Root": "/dicom-web/",
@@ -23,32 +20,64 @@
     "Ssl": false,
     "EnableCors": true
   },
-
   "HttpHeaders": {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "Authorization, Origin, X-Requested-With, Content-Type, Accept, Range",
     "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS"
   },
-
   "Worklists": {
     "Enable": true,
     "Database": "/var/lib/orthanc/worklists",
     "SetStudyInstanceUidIfMissing": true,
     "DeleteWorklistsOnStableStudy": true
   },
-
   "StorageDirectory": "/var/lib/orthanc/db",
   "IndexDirectory": "/var/lib/orthanc/db",
-
   "DicomModalities": {
-    "UIH_MRI": ["UIH", "172.16.1.103", 3333],
-    "CT_MACHINE": ["ct99", "172.16.1.99", 4006],
-    "weasis-clinic": ["weasis123", "172.16.1.140", 11113],
-    "weasis-su": ["weasissu", "172.16.1.141", 11113],
-    "GE-Voluson-E9": ["Voluson", "172.16.1.46", 104],
-    "XRAY_1": ["FILMPLUS", "172.16.1.80", 105],
-    "XRAY_2": ["FILMPLUS", "192.168.1.150", 105],
-    "XRAY_3": ["FILMPLUS", "192.168.1.90", 105],
-    "XRAY_4": ["FILMPLUS", "172.16.1.91", 105]
+    "UIH_MRI": [
+      "UIH",
+      "172.16.1.103",
+      3333
+    ],
+    "CT_MACHINE": [
+      "ct99",
+      "172.16.1.99",
+      4006
+    ],
+    "weasis-clinic": [
+      "weasis123",
+      "172.16.1.140",
+      11113
+    ],
+    "weasis-su": [
+      "weasissu",
+      "172.16.1.141",
+      11113
+    ],
+    "GE-Voluson-E9": [
+      "Voluson",
+      "172.16.1.46",
+      104
+    ],
+    "XRAY_1": [
+      "FILMPLUS",
+      "172.16.1.80",
+      105
+    ],
+    "XRAY_2": [
+      "FILMPLUS",
+      "192.168.1.150",
+      105
+    ],
+    "XRAY_3": [
+      "FILMPLUS",
+      "192.168.1.90",
+      105
+    ],
+    "XRAY_4": [
+      "FILMPLUS",
+      "172.16.1.91",
+      105
+    ]
   }
 }
