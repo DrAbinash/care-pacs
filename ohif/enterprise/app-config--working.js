@@ -1,3 +1,8 @@
+/* HISTORICAL BACKUP — NOT USED BY THE DOCKERFILE.
+ * Kept for reference only. Active config: app-config.js
+ * This copy hard-codes a Tailscale IP; the active config uses same-origin
+ * relative /dicom-web and /wado roots for LAN + Tailscale.
+ */
 /* CARE Diagnostics OHIF Enterprise Config
    CARE Orthanc only. No demo datasource.
 */

@@ -124,10 +124,14 @@ services:
 
   ohif:
     build:
-      context: /volume1/docker/care-pacs/ohif/enterprise
+      # Relative to this compose file (repo root). On Synology the checkout lives at
+      # /volume1/docker/care-pacs — keep compose cwd there so the context resolves.
+      context: ./ohif/enterprise
       dockerfile: Dockerfile
       args:
-        OHIF_BRANCH: v3.10.0
+        OHIF_REF: v3.10.0
+        OHIF_COMMIT: 0b6e9cba7613dba1df883985d3c821a86b3ba0ff
+        CARE_VIEWER_VERSION: 1.0.0-foundation
     image: care-ohif-enterprise:v1
     container_name: care-ohif
     restart: unless-stopped
@@ -135,6 +139,21 @@ services:
       - orthanc
     ports:
       - "3010:80"
+    volumes:
+      # Optional runtime allowlist overrides (no secrets). Image ships a fail-closed default;
+      # replace/edit this host file on the NAS without rebuilding OHIF.
+      - ./ohif/enterprise/care-customization/care-config.runtime.js:/usr/share/nginx/html/care/care-config.js:ro
+    # Image also defines HEALTHCHECK; compose healthcheck mirrors viewer + config only.
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget -q -O /dev/null http://127.0.0.1/healthz && wget -q -O /dev/null http://127.0.0.1/app-config.js || exit 1",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
     networks:
       - care-pacs-net
 
