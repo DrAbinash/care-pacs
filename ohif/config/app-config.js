@@ -19,9 +19,9 @@ window.config = {
       configuration: {
         friendlyName: 'Care Diagnostics Orthanc',
         name: 'orthanc',
-        qidoRoot: 'http://100.65.255.115:3010/dicom-web',
-        wadoRoot: 'http://100.65.255.115:3010/dicom-web',
-        wadoUriRoot: 'http://100.65.255.115:3010/wado',
+        qidoRoot: '/dicom-web',
+        wadoRoot: '/dicom-web',
+        wadoUriRoot: '/wado',
         qidoSupportsIncludeField: true, // FIXED: Changed from false to true
         supportsReject: false,
         supportsStow: true,

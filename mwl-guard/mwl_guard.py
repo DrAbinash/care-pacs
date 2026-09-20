@@ -129,14 +129,16 @@ def validate_worklist(path: Path) -> Tuple[bool, List[str], List[str]]:
 
 
 def file_is_stable(path: Path) -> bool:
-    """Skip files still being written (size/mtime changing)."""
+    """Skip files still being written without sleeping once per file.
+
+    A file is considered stable when it is non-empty and its modification
+    time is at least STABLE_SECONDS old. This keeps the startup safety sweep
+    fast even when the worklist directory contains many .wl files.
+    """
     try:
-        size1 = path.stat().st_size
-        mtime1 = path.stat().st_mtime
-        time.sleep(min(STABLE_SECONDS, 0.5))
-        size2 = path.stat().st_size
-        mtime2 = path.stat().st_mtime
-        return size1 == size2 and mtime1 == mtime2 and size2 > 0
+        stat = path.stat()
+        age_seconds = time.time() - stat.st_mtime
+        return stat.st_size > 0 and age_seconds >= STABLE_SECONDS
     except FileNotFoundError:
         return False
 

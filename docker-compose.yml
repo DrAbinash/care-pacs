@@ -13,6 +13,25 @@ name: care-pacs
 #   mkdir -p /volume1/docker/care-pacs/orthanc/worklists-staging
 
 services:
+
+  postgres:
+    image: postgres:16
+    container_name: care-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: orthanc
+      POSTGRES_USER: orthanc
+      POSTGRES_PASSWORD: ${ORTHANC_PG_PASSWORD}
+    volumes:
+      - /volume1/docker/care-pacs/postgres/data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U orthanc -d orthanc"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - care-pacs-net
+
   orthanc:
     image: orthancteam/orthanc:latest
     container_name: care-orthanc
@@ -20,6 +39,18 @@ services:
     depends_on:
       mwl-guard:
         condition: service_healthy
+      postgres:
+        condition: service_healthy
+    environment:
+      POSTGRESQL_PLUGIN_ENABLED: "true"
+      ORTHANC__POSTGRESQL__HOST: postgres
+      ORTHANC__POSTGRESQL__PORT: "5432"
+      ORTHANC__POSTGRESQL__DATABASE: orthanc
+      ORTHANC__POSTGRESQL__USERNAME: orthanc
+      ORTHANC__POSTGRESQL__PASSWORD: ${ORTHANC_PG_PASSWORD}
+      ORTHANC__POSTGRESQL__ENABLE_INDEX: "true"
+      ORTHANC__POSTGRESQL__ENABLE_STORAGE: "false"
+      ORTHANC__POSTGRESQL__ENABLE_SSL: "false"
     ports:
       - "5680:4242"   # DICOM C-STORE / C-ECHO / MWL C-FIND
       - "8042:8042"   # Orthanc web/API
@@ -29,7 +60,6 @@ services:
       - /volume1/docker/care-pacs/orthanc/scripts:/etc/orthanc/scripts:ro
       # Antigravity MWL — Care API writes .wl files; Orthanc serves them to MRI/CT/USG
       - /volume1/docker/care-pacs/orthanc/worklists:/var/lib/orthanc/worklists
-    command: ["/etc/orthanc/orthanc.json"]
     networks:
       - care-pacs-net
 
