@@ -122,6 +122,33 @@ services:
     networks:
       - care-pacs-net
 
+  # Rolling Orthanc study retention (gated by ERP Advanced → Auto-retention switch).
+  # Copies script from this repo path on the NAS; default policy keeps ~500 studies.
+  orthanc-retention:
+    image: python:3.11-slim
+    container_name: care-orthanc-retention
+    restart: unless-stopped
+    depends_on:
+      - orthanc
+    environment:
+      ORTHANC_URL: http://care-orthanc:8042
+      KEEP_STUDIES: "500"
+      CLEANUP_TRIGGER: "520"
+      CHECK_INTERVAL_SECONDS: "300"
+      MIN_STUDY_AGE_MINUTES: "60"
+      # Same dual-LAN ERP path as care-erp-sync — override in .env if needed.
+      ERP_BASE_URL: ${ERP_BASE_URL:-http://172.16.1.139:8888}
+      ERP_ALT_BASE_URLS: ${ERP_ALT_BASE_URLS:-http://192.168.1.137:8888}
+      ERP_INTERNAL_API_KEY: ${ERP_INTERNAL_API_KEY:-1234}
+    volumes:
+      - /volume1/docker/care-pacs/orthanc-retention:/app
+    working_dir: /app
+    command: >-
+      sh -c "pip install --no-cache-dir -r requirements.txt &&
+             python orthanc_retention.py"
+    networks:
+      - care-pacs-net
+
   ohif:
     build:
       # Relative to this compose file (repo root). On Synology the checkout lives at
