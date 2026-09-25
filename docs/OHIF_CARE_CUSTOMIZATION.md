@@ -22,7 +22,22 @@ Modalities → Orthanc (:8042 DICOM :4242)
 ```
 
 Pinned upstream: OHIF **v3.10.0** commit `0b6e9cba7613dba1df883985d3c821a86b3ba0ff`.  
+Builder: `node:18-bookworm` (apt reliability only — **do not** bump Node or OHIF).  
 Image tag: `care-ohif-enterprise:v1`.
+
+## P0 branding (restrained chrome)
+
+- Official logo: `ohif/enterprise/care-customization/assets/care-diagnostics-logo.png`
+  → served as `/care/assets/care-diagnostics-logo.png`.
+- `whiteLabeling.createLogoComponentFn` in `app-config.js` shows the logo (~26px)
+  plus `CARE Diagnostics Viewer`. Kept out of the image viewport and toolbars.
+- `investigationalUseDialog: { option: 'never' }` — required for this clinical build.
+- Relative DICOMweb roots remain `/dicom-web` and `/wado` (nginx → Orthanc).
+- ERP bridge stay fail-closed (empty allowlists until configured on the NAS).
+
+**Out of scope for P0:** hanging protocols, custom modes, measurement presets,
+hanging layouts, Cornerstone extension work (P1+). Do not deploy from this PR
+without an explicit NAS rebuild approval.
 
 ## Integration model (important)
 
@@ -95,11 +110,17 @@ Use a full OHIF React extension/mode only when Cornerstone services are required
 
 ## Update the pinned OHIF version
 
+**Do not do this lightly.** Production is frozen at
+`0b6e9cba7613dba1df883985d3c821a86b3ba0ff` (v3.10.0) with `node:18-bookworm`.
+
 1. Resolve the immutable commit: `git ls-remote https://github.com/OHIF/Viewers.git <tag>^{}`.
 2. Update `OHIF_REF` / `OHIF_COMMIT` in `Dockerfile` and compose build `args`.
 3. Rebuild `--no-cache` and re-validate study list / MPR / measurements on Synology.
 4. If a patch exists under `patches/`, the Dockerfile must fail when it no longer applies
    (none today).
+
+Branding-only changes (logo, chrome, docs, static tests) must **not** change
+`OHIF_REF`, `OHIF_COMMIT`, Node major, nginx major, Orthanc, or storage.
 
 ## Rollback (no volume deletes)
 
