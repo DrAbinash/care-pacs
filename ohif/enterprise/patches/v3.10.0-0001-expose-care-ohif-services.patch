@@ -1,0 +1,16 @@
+--- a/platform/app/src/App.tsx	2026-09-25 19:35:07.397173585 +0000
++++ b/platform/app/src/App.tsx	2026-09-25 19:35:07.401173389 +0000
+@@ -190,3 +190,13 @@
+ export default App;
+ 
+ export { commandsManager, extensionManager, servicesManager };
++
++// CARE Diagnostics: expose managers for the static CARE measurement / HP bridge.
++// Fail-closed CARE scripts read window.__CARE_OHIF__; no PHI is placed here.
++if (typeof window !== 'undefined') {
++  (window as any).__CARE_OHIF__ = {
++    servicesManager,
++    extensionManager,
++    commandsManager,
++  };
++}
