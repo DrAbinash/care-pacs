@@ -1,0 +1,22 @@
+--- a/extensions/default/src/getHangingProtocolModule.js	2026-09-25 19:35:07.493168889 +0000
++++ b/extensions/default/src/getHangingProtocolModule.js	2026-09-25 19:35:07.513167912 +0000
+@@ -2,6 +2,7 @@
+ import hpMNCompare from './hangingprotocols/hpCompare';
+ import hpMammography from './hangingprotocols/hpMammo';
+ import hpScale from './hangingprotocols/hpScale';
++import { CARE_HANGING_PROTOCOLS } from './hangingprotocols/care/careProtocols';
+ 
+ const defaultProtocol = {
+   id: 'default',
+@@ -149,6 +150,11 @@
+       name: hpMN8.id,
+       protocol: hpMN8,
+     },
++    // CARE Diagnostics radiologist protocols (MRI brain/spine, CT brain/chest/abdomen).
++    ...CARE_HANGING_PROTOCOLS.map(protocol => ({
++      name: protocol.id,
++      protocol,
++    })),
+   ];
+ }
+ 

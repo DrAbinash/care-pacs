@@ -144,7 +144,8 @@ window.config = {
             { id: 'ct-liver', description: 'Liver', window: '150', level: '90' },
             { id: 'ct-mediastinum', description: 'Mediastinum', window: '350', level: '50' },
             { id: 'ct-abdomen', description: 'Abdomen', window: '350', level: '40' },
-            { id: 'ct-stroke', description: 'Stroke / subdural', window: '40', level: '40' },
+            { id: 'ct-stroke', description: 'Stroke / narrow brain', window: '40', level: '40' },
+            { id: 'ct-subdural', description: 'Subdural', window: '150', level: '75' },
           ],
           MR: [
             { id: 'mr-brain-t1', description: 'Brain T1', window: '500', level: '250' },
@@ -215,6 +216,25 @@ window.config = {
   ],
   extensions: [],
   modes: [],
+
+  /**
+   * Rank CARE hanging protocols before stock `default`.
+   * Protocol matching is conservative — unmatched studies fall back to default.
+   * Prior/current auto-pairing is NOT enabled (deferred; no patient-name matching).
+   */
+  modesConfiguration: {
+    '@ohif/mode-longitudinal': {
+      hangingProtocol: [
+        'care.mriBrain',
+        'care.mriCervicalSpine',
+        'care.mriLumbarSpine',
+        'care.ctBrain',
+        'care.ctChest',
+        'care.ctAbdomen',
+        'default',
+      ],
+    },
+  },
 
   /**
    * CARE static-integration settings (read by /care/*.js).
