@@ -189,6 +189,18 @@ describe("record-build-metadata.sh", () => {
   });
 });
 
+describe("care-chrome shortcuts panel", () => {
+  it("exposes a Keys control without PHI keys", () => {
+    const src = fs.readFileSync(
+      path.join(__dirname, "..", "care-customization", "care-chrome.js"),
+      "utf8"
+    );
+    assert.match(src, /care-chrome-shortcuts/);
+    assert.match(src, /showShortcuts/);
+    assert.doesNotMatch(src, /patientName|PatientID|accessionNumber/i);
+  });
+});
+
 describe("care-config.runtime.js merge", () => {
   it("merges allowlists into window.config.care", () => {
     const vm = require("node:vm");

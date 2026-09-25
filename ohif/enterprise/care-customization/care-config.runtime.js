@@ -8,6 +8,18 @@
  *
  * Must merge into window.config.care — this file replaces the baked
  * care-config.js at runtime, so the merge logic lives here too.
+ *
+ * Typical CARE clinic patterns (copy, then replace hosts):
+ *   // LAN ERP served over HTTP on the NAS:
+ *   // erpOriginAllowlist: ["http://192.168.x.x:5173", "http://care-nas.local"],
+ *   // returnUrlAllowlist: ["http://192.168.x.x:5173", "http://care-nas.local"],
+ *   // defaultReturnUrl: "http://192.168.x.x:5173/radiology",
+ *   //
+ *   // Tailscale / HTTPS ERP:
+ *   // erpOriginAllowlist: ["https://care-erp.tailnet-name.ts.net"],
+ *   // returnUrlAllowlist: ["https://care-erp.tailnet-name.ts.net"],
+ *   // defaultReturnUrl: "https://care-erp.tailnet-name.ts.net/radiology",
+ * Origins must match exactly (scheme + host + port). Never use "*".
  */
 window.careConfig = Object.assign(
   {

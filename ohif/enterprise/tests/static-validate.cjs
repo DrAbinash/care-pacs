@@ -64,6 +64,22 @@ assert.match(appConfig, /dicomUploadEnabled:\s*false/);
 // Clinical deployment: investigational-use dialog must stay disabled.
 assert.match(appConfig, /investigationalUseDialog\s*:\s*\{[\s\S]*option\s*:\s*['\"]never['\"]/);
 assert.doesNotMatch(appConfig, /strictZSpacingForVolumeViewport/);
+// P1 reading-room customizations (OHIF 3.10 CustomizationService).
+assert.match(appConfig, /cornerstone\.windowLevelPresets/);
+assert.match(appConfig, /layoutSelector\.commonPresets/);
+assert.match(appConfig, /ohif\.hotkeyBindings/);
+assert.match(appConfig, /ct-soft-tissue/);
+assert.match(appConfig, /ct-mediastinum/);
+assert.match(appConfig, /numRows:\s*2,\s*numCols:\s*1/);
+assert.match(appConfig, /maxNumRequests/);
+
+const chrome = fs.readFileSync(
+  path.join(enterprise, "care-customization", "care-chrome.js"),
+  "utf8"
+);
+assert.match(chrome, /care-shortcuts-panel/);
+assert.match(chrome, /Reading shortcuts/);
+assert.doesNotMatch(chrome, /patientName|PatientID|accessionNumber/i);
 
 const dockerfile = fs.readFileSync(path.join(enterprise, "Dockerfile"), "utf8");
 assert.match(dockerfile, /FROM node:18-bookworm AS builder/);
