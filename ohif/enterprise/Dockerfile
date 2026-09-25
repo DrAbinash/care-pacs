@@ -2,12 +2,14 @@
 # Pins an immutable OHIF commit and injects CARE-owned customisation assets.
 # Does not vendor the OHIF monorepo. Does not alter Orthanc storage or MWL.
 
-FROM node:18-bullseye AS builder
+FROM node:18-bookworm AS builder
 
 # Human-facing tag (documentation). Immutable pin is OHIF_COMMIT.
+# DO NOT change OHIF_REF / OHIF_COMMIT without an explicit clinical migration plan.
+# Builder OS is Bookworm for apt reliability only — Node stays 18; OHIF stays frozen.
 ARG OHIF_REF=v3.10.0
 ARG OHIF_COMMIT=0b6e9cba7613dba1df883985d3c821a86b3ba0ff
-ARG CARE_VIEWER_VERSION=1.0.0-foundation
+ARG CARE_VIEWER_VERSION=1.0.1-p0-branding
 
 WORKDIR /opt
 
@@ -39,7 +41,8 @@ COPY care-customization /opt/care-customization
 RUN test -f /opt/care-customization/care-bridge.js \
  && test -f /opt/care-customization/care-chrome.js \
  && test -f /opt/care-customization/care-config.js \
- && test -f /opt/care-customization/care-security.js
+ && test -f /opt/care-customization/care-security.js \
+ && test -f /opt/care-customization/assets/care-diagnostics-logo.png
 
 COPY scripts/inject-care-customization.sh /opt/scripts/inject-care-customization.sh
 COPY scripts/record-build-metadata.sh /opt/scripts/record-build-metadata.sh
@@ -61,8 +64,11 @@ COPY default.conf /etc/nginx/conf.d/default.conf
 # Fail image build if CARE injection did not land.
 RUN test -f /usr/share/nginx/html/care/care-bridge.js \
  && test -f /usr/share/nginx/html/care/build-info.json \
+ && test -f /usr/share/nginx/html/care/assets/care-diagnostics-logo.png \
  && grep -q 'care/care-bridge.js' /usr/share/nginx/html/index.html \
- && grep -q 'CARE Diagnostics Viewer' /usr/share/nginx/html/app-config.js
+ && grep -q 'CARE Diagnostics Viewer' /usr/share/nginx/html/app-config.js \
+ && grep -q "care-diagnostics-logo.png" /usr/share/nginx/html/app-config.js \
+ && grep -q "investigationalUseDialog" /usr/share/nginx/html/app-config.js
 
 EXPOSE 80
 

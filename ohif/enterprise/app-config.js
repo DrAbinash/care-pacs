@@ -6,8 +6,8 @@
  *
  * Historical absolute Tailscale roots: app-config--working.js (inactive backup).
  *
- * Behavioural policy for this foundation PR:
- *   - Keep whiteLabeling (CARE identity) and relative DICOMweb roots.
+ * Behavioural policy:
+ *   - Keep whiteLabeling (official CARE logo + product name) and relative DICOMweb.
  *   - Suppress the investigational-use dialog for the CARE clinical deployment.
  *   - Do NOT change volume Z-spacing defaults.
  *   - Do NOT enable DICOM upload (baseline had supportsStow; OHIF v3.10 uses
@@ -15,7 +15,11 @@
  *   - omitQuotationForMultipartRequest + bulkDataURI are Orthanc DICOMweb
  *     compatibility flags required for reliable WADO-RS multipart retrieval.
  *
- * API (OHIF v3.10 / 0b6e9cba7613dba1df883985d3c821a86b3ba0ff):
+ * FROZEN UPSTREAM — DO NOT UPGRADE without an explicit clinical migration:
+ *   OHIF_REF=v3.10.0
+ *   OHIF_COMMIT=0b6e9cba7613dba1df883985d3c821a86b3ba0ff
+ *
+ * API (OHIF v3.10 / that commit only):
  *   - Global: window.config
  *   - whiteLabeling.createLogoComponentFn(React[, props]) → React node
  *   - dataSources: @ohif/extension-default.dataSourcesModule.dicomweb
@@ -36,21 +40,46 @@ window.config = {
 
   whiteLabeling: {
     createLogoComponentFn: function (React) {
+      // Official CARE Diagnostics logo (CARE-owned asset under /care/assets/).
+      // Kept small (~26px tall) so it never covers viewport pixels or toolbars.
       return React.createElement(
         'div',
         {
           className: 'care-ohif-logo',
           title: 'CARE Diagnostics Viewer',
           style: {
-            color: '#e8eef7',
-            fontSize: '14px',
-            fontWeight: 600,
-            letterSpacing: '0.02em',
-            paddingLeft: '8px',
-            whiteSpace: 'nowrap',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            paddingLeft: '6px',
+            maxHeight: '28px',
+            overflow: 'hidden',
           },
         },
-        'CARE Diagnostics Viewer'
+        React.createElement('img', {
+          src: '/care/assets/care-diagnostics-logo.png',
+          alt: 'CARE Diagnostics',
+          style: {
+            height: '26px',
+            width: 'auto',
+            maxWidth: '140px',
+            objectFit: 'contain',
+            display: 'block',
+          },
+        }),
+        React.createElement(
+          'span',
+          {
+            style: {
+              color: '#e8eef7',
+              fontSize: '12px',
+              fontWeight: 600,
+              letterSpacing: '0.02em',
+              whiteSpace: 'nowrap',
+            },
+          },
+          'CARE Diagnostics Viewer'
+        )
       );
     },
   },

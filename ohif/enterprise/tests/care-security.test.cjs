@@ -152,6 +152,10 @@ describe("inject-care-customization.sh", () => {
     assert.match(html, /care\/care-bridge\.js/);
     assert.match(html, /CARE_CUSTOMIZATION_BEGIN/);
     assert.ok(fs.existsSync(path.join(dist, "care", "care-bridge.js")));
+    assert.ok(
+      fs.existsSync(path.join(dist, "care", "assets", "care-diagnostics-logo.png")),
+      "inject must copy CARE logo into dist/care/assets/"
+    );
   });
 });
 
