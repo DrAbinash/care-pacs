@@ -108,9 +108,11 @@ Legend: **FACT** = verified in this repository / upstream API; **ASSUMPTION** = 
   script. **Not** a registered OHIF/Cornerstone extension (deferred to a later PR).
 - Avoid vendoring the OHIF monorepo; pin immutable commit.
 - No OHIF core source patches in this PR (`patches/` reserved and empty of patch files).
-- Behavioural app-config hygiene: do **not** set `investigationalUseDialog: never`,
-  `strictZSpacingForVolumeViewport`, or `dicomUploadEnabled: true` in this foundation.
-  Keep Orthanc compatibility flags `omitQuotationForMultipartRequest` + `bulkDataURI`.
+- Behavioural app-config hygiene: do **not** set `strictZSpacingForVolumeViewport`
+  or `dicomUploadEnabled: true`. Keep Orthanc compatibility flags
+  `omitQuotationForMultipartRequest` + `bulkDataURI`.
+- **Update (P0 / NAS clinical build):** `investigationalUseDialog: { option: 'never' }`
+  is now required and enforced by `tests/static-validate.cjs`. Do not revert it.
 
 ## 9. Build / config / smoke-test gaps (pre-foundation)
 
