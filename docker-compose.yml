@@ -158,7 +158,7 @@ services:
       args:
         OHIF_REF: v3.10.0
         OHIF_COMMIT: 0b6e9cba7613dba1df883985d3c821a86b3ba0ff
-        CARE_VIEWER_VERSION: 1.1.0-p1-reading-room
+        CARE_VIEWER_VERSION: 1.2.0-p2-radiologist
     image: care-ohif-enterprise:v1
     container_name: care-ohif
     restart: unless-stopped

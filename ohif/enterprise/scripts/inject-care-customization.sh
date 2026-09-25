@@ -13,10 +13,16 @@ test -d "$CARE_SRC"
 CARE_DST="$DIST/care"
 mkdir -p "$CARE_DST"
 
-for f in care-security.js care-bridge.js care-chrome.js care-config.js; do
+for f in care-security.js care-bridge.js care-chrome.js care-config.js care-measurement.js; do
   test -f "$CARE_SRC/$f" || { echo "ERROR: missing CARE file $CARE_SRC/$f" >&2; exit 1; }
   cp "$CARE_SRC/$f" "$CARE_DST/$f"
 done
+
+# Measurement adapter (subdir)
+mkdir -p "$CARE_DST/measurement"
+test -f "$CARE_SRC/measurement/care-measurement-adapter.js" \
+  || { echo "ERROR: missing measurement adapter" >&2; exit 1; }
+cp "$CARE_SRC/measurement/care-measurement-adapter.js" "$CARE_DST/measurement/"
 
 # Optional assets directory
 if [ -d "$CARE_SRC/assets" ]; then
@@ -47,7 +53,9 @@ awk '
     print "    <script src=\"/care/care-security.js\"></script>"
     print "    <script src=\"/care/care-config.js\"></script>"
     print "    <script src=\"/care/build-info.js\"></script>"
+    print "    <script src=\"/care/measurement/care-measurement-adapter.js\"></script>"
     print "    <script src=\"/care/care-bridge.js\"></script>"
+    print "    <script src=\"/care/care-measurement.js\"></script>"
     print "    <script src=\"/care/care-chrome.js\"></script>"
     print "    <!-- CARE_CUSTOMIZATION_END -->"
     done=1

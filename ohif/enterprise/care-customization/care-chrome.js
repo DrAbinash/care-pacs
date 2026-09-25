@@ -183,6 +183,149 @@
     document.body.appendChild(panel);
   }
 
+  function chip(label, active, onClick) {
+    var b = document.createElement("button");
+    b.type = "button";
+    b.textContent = label;
+    b.style.cssText =
+      "pointer-events:auto;margin:2px;padding:4px 8px;border-radius:4px;cursor:pointer;" +
+      "font:11px/1.2 system-ui,sans-serif;border:1px solid " +
+      (active ? "#059669" : "#4b5563") +
+      ";background:" +
+      (active ? "#065f46" : "#1f2937") +
+      ";color:#e5e7eb";
+    b.addEventListener("click", onClick);
+    return b;
+  }
+
+  function showMeasurePanel() {
+    removePanel("care-about-panel");
+    removePanel("care-shortcuts-panel");
+    removePanel("care-measure-panel");
+    var ADAPTER = window.CARE_MEASUREMENT_ADAPTER;
+    var API = window.CARE_MEASUREMENT;
+    if (!ADAPTER || !API) {
+      var missing = panelShell("care-measure-panel", "Measurements");
+      missing.appendChild(
+        document.createTextNode("Measurement bridge not loaded in this image.")
+      );
+      missing.appendChild(closeButton(missing));
+      document.body.appendChild(missing);
+      return;
+    }
+
+    var sticky = API.getSticky();
+    var panel = panelShell("care-measure-panel", "Measure → CARE ERP");
+    panel.style.maxWidth = "360px";
+
+    var note = document.createElement("p");
+    note.style.cssText = "margin:0 0 8px;opacity:.85";
+    note.textContent =
+      "Optional sticky intent. Measure without a label anytime. Levels are never auto-guessed.";
+    panel.appendChild(note);
+
+    function refresh() {
+      sticky = API.getSticky();
+      showMeasurePanel();
+    }
+
+    var intentRow = document.createElement("div");
+    intentRow.style.cssText = "margin-bottom:8px";
+    intentRow.appendChild(document.createTextNode("Intent: "));
+    [
+      ["Canal AP", ADAPTER.INTENTS.CANAL_AP],
+      ["Lesion", ADAPTER.INTENTS.LESION],
+      ["Midline", ADAPTER.INTENTS.MIDLINE_SHIFT],
+      ["Other", ADAPTER.INTENTS.OTHER],
+    ].forEach(function (pair) {
+      intentRow.appendChild(
+        chip(pair[0], sticky.intent === pair[1], function () {
+          API.setIntent(sticky.intent === pair[1] ? null : pair[1]);
+          refresh();
+        })
+      );
+    });
+    panel.appendChild(intentRow);
+
+    var cRow = document.createElement("div");
+    cRow.style.cssText = "margin-bottom:6px";
+    cRow.appendChild(document.createTextNode("Cervical: "));
+    ADAPTER.CERVICAL_LEVELS.forEach(function (lvl) {
+      var short = lvl.replace(/^C(\d+)-C?/, "C$1-").replace(/C(\d+)$/, "$1");
+      // Display C2-3 style; store C2-C3
+      var display = lvl.replace(/-C/g, "-").replace(/-L/g, "-");
+      cRow.appendChild(
+        chip(display, sticky.spinalLevel === lvl, function () {
+          API.setIntent(ADAPTER.INTENTS.CANAL_AP);
+          API.setCareLabel("Spinal Canal AP");
+          API.setSpinalLevel(sticky.spinalLevel === lvl ? null : lvl);
+          API.applyStickyToLast();
+          refresh();
+        })
+      );
+    });
+    panel.appendChild(cRow);
+
+    var lRow = document.createElement("div");
+    lRow.style.cssText = "margin-bottom:6px";
+    lRow.appendChild(document.createTextNode("Lumbar: "));
+    ADAPTER.LUMBAR_LEVELS.forEach(function (lvl) {
+      var display = lvl.replace(/-L/g, "-").replace(/-S/g, "-S");
+      lRow.appendChild(
+        chip(display, sticky.spinalLevel === lvl, function () {
+          API.setIntent(ADAPTER.INTENTS.CANAL_AP);
+          API.setCareLabel("Spinal Canal AP");
+          API.setSpinalLevel(sticky.spinalLevel === lvl ? null : lvl);
+          API.applyStickyToLast();
+          refresh();
+        })
+      );
+    });
+    panel.appendChild(lRow);
+
+    var brainRow = document.createElement("div");
+    brainRow.style.cssText = "margin-bottom:6px";
+    brainRow.appendChild(document.createTextNode("Brain labels: "));
+    ADAPTER.BRAIN_LABELS.forEach(function (lab) {
+      brainRow.appendChild(
+        chip(lab, sticky.careLabel === lab, function () {
+          if (lab === "Midline Shift") API.setIntent(ADAPTER.INTENTS.MIDLINE_SHIFT);
+          else if (lab === "Lesion" || lab === "Mass" || lab === "Hematoma")
+            API.setIntent(ADAPTER.INTENTS.LESION);
+          API.setCareLabel(sticky.careLabel === lab ? null : lab);
+          API.applyStickyToLast();
+          refresh();
+        })
+      );
+    });
+    panel.appendChild(brainRow);
+
+    var status = document.createElement("p");
+    status.style.cssText = "margin:8px 0 0;opacity:.9;font-size:11px";
+    status.textContent =
+      "Sticky: " +
+      (sticky.intent || "—") +
+      " / " +
+      (sticky.spinalLevel || "—") +
+      " / " +
+      (sticky.careLabel || "—");
+    panel.appendChild(status);
+
+    var clear = document.createElement("button");
+    clear.type = "button";
+    clear.textContent = "Clear sticky";
+    clear.style.cssText =
+      "margin-top:8px;margin-right:6px;background:#1f2937;color:#e5e7eb;border:1px solid #4b5563;" +
+      "border-radius:4px;padding:4px 10px;cursor:pointer";
+    clear.addEventListener("click", function () {
+      API.clearSticky();
+      refresh();
+    });
+    panel.appendChild(clear);
+    panel.appendChild(closeButton(panel));
+    document.body.appendChild(panel);
+  }
+
   function isCollapsed() {
     try {
       return window.localStorage.getItem(COLLAPSED_KEY) === "1";
@@ -247,6 +390,15 @@
     shortcutsBtn.addEventListener("click", showShortcuts);
     actions.appendChild(shortcutsBtn);
 
+    var measureBtn = document.createElement("button");
+    measureBtn.type = "button";
+    measureBtn.id = "care-chrome-measure";
+    measureBtn.textContent = "Measure";
+    measureBtn.title = "CARE measurement labels / spinal levels (sticky intent)";
+    styleInteractive(measureBtn, "#1e3a5f", "#dbeafe", "#1e40af");
+    measureBtn.addEventListener("click", showMeasurePanel);
+    actions.appendChild(measureBtn);
+
     var returnUrl = resolveReturnUrl();
     if (returnUrl) {
       var retBtn = document.createElement("button");
@@ -270,6 +422,7 @@
       if (collapsed) {
         removePanel("care-about-panel");
         removePanel("care-shortcuts-panel");
+        removePanel("care-measure-panel");
       }
     }
 

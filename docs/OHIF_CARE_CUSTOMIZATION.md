@@ -41,13 +41,25 @@ Still on frozen OHIF `v3.10.0` / `0b6e9cba…` and `node:18-bookworm`.
 
 - `customizationService` in `app-config.js`:
   - CARE-tuned `cornerstone.windowLevelPresets` for **CT / MR / CR / DX / US**
+  - Separate CT **Stroke / narrow brain** and **Subdural** presets (not combined)
   - Layout presets including **2×1** compare (`layoutSelector.commonPresets`)
   - Extra W/L hotkeys **5** (liver) and **6** (mediastinum) via `$push` (stock 1–4 kept)
 - CARE chrome **Keys** button → non-PHI shortcut cheat sheet (`care-chrome.js`)
 - Prefetch / loading indicators via `maxNumRequests` + `showLoadingIndicator`
 
-**Still deferred (P2+):** custom hanging-protocol modules, measurement ↔ ERP sync,
-Cornerstone extensions, OHIF upgrades. Do not deploy without explicit NAS approval.
+## P2 radiologist workflow
+
+- **P2A measurements:** `MeasurementService` → CARE adapter → dual postMessage
+  (`care.viewer.measurement*` + legacy `source:care-ohif`). See
+  `docs/CARE_OHIF_MEASUREMENT_BRIDGE.md`. CARE chrome **Measure** panel for
+  Canal AP levels / brain labels (manual only — no auto level guess).
+- **P2B hanging protocols:** CARE protocols registered into OHIF default HP module
+  (`care.mriBrain`, cervical/lumbar spine, CT brain/chest/abdomen) with
+  `modesConfiguration` ranking and `default` fallback.
+- Minimal patches: `patches/v3.10.0-0001-…`, `v3.10.0-0002-…` (fail build if stale).
+
+**Still deferred:** ERP→OHIF mutation, automatic prior pairing, custom OHIF mode package.
+Do not deploy without explicit NAS approval.
 
 ## Integration model (important)
 

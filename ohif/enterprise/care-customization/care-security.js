@@ -127,11 +127,20 @@
   }
 
   function assertNoPhiKeys(payload) {
-    for (var i = 0; i < FORBIDDEN_PHI_KEYS.length; i++) {
-      if (Object.prototype.hasOwnProperty.call(payload, FORBIDDEN_PHI_KEYS[i])) {
-        throw new Error("PHI key forbidden in CARE bridge payload: " + FORBIDDEN_PHI_KEYS[i]);
+    function walk(obj, depth) {
+      if (!obj || typeof obj !== "object" || depth > 3) return;
+      for (var i = 0; i < FORBIDDEN_PHI_KEYS.length; i++) {
+        if (Object.prototype.hasOwnProperty.call(obj, FORBIDDEN_PHI_KEYS[i])) {
+          throw new Error("PHI key forbidden in CARE bridge payload: " + FORBIDDEN_PHI_KEYS[i]);
+        }
+      }
+      var keys = Object.keys(obj);
+      for (var k = 0; k < keys.length; k++) {
+        var val = obj[keys[k]];
+        if (val && typeof val === "object" && !Array.isArray(val)) walk(val, depth + 1);
       }
     }
+    walk(payload, 0);
   }
 
   return {

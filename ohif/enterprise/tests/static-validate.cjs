@@ -72,6 +72,14 @@ assert.match(appConfig, /ct-soft-tissue/);
 assert.match(appConfig, /ct-mediastinum/);
 assert.match(appConfig, /numRows:\s*2,\s*numCols:\s*1/);
 assert.match(appConfig, /maxNumRequests/);
+assert.match(appConfig, /modesConfiguration/);
+assert.match(appConfig, /care\.mriBrain/);
+assert.match(appConfig, /care\.mriCervicalSpine/);
+assert.match(appConfig, /care\.mriLumbarSpine/);
+assert.match(appConfig, /care\.ctBrain/);
+assert.match(appConfig, /ct-subdural/);
+assert.match(appConfig, /Stroke \/ narrow brain/);
+assert.doesNotMatch(appConfig, /Stroke \/ subdural/);
 
 const chrome = fs.readFileSync(
   path.join(enterprise, "care-customization", "care-chrome.js"),
@@ -79,13 +87,37 @@ const chrome = fs.readFileSync(
 );
 assert.match(chrome, /care-shortcuts-panel/);
 assert.match(chrome, /Reading shortcuts/);
+assert.match(chrome, /care-measure-panel/);
+assert.match(chrome, /care-chrome-measure/);
 assert.doesNotMatch(chrome, /patientName|PatientID|accessionNumber/i);
+
+const measAdapter = path.join(
+  enterprise,
+  "care-customization",
+  "measurement",
+  "care-measurement-adapter.js"
+);
+assert.ok(fs.existsSync(measAdapter), "missing measurement adapter");
+checkJs(measAdapter);
+checkJs(path.join(enterprise, "care-customization", "care-measurement.js"));
+
+const patchesDir = path.join(enterprise, "patches");
+assert.ok(fs.existsSync(path.join(patchesDir, "v3.10.0-0001-expose-care-ohif-services.patch")));
+assert.ok(fs.existsSync(path.join(patchesDir, "v3.10.0-0002-register-care-hanging-protocols.patch")));
+assert.ok(
+  fs.existsSync(
+    path.join(enterprise, "care-customization", "hanging-protocols", "ohif", "careProtocols.js")
+  )
+);
 
 const dockerfile = fs.readFileSync(path.join(enterprise, "Dockerfile"), "utf8");
 assert.match(dockerfile, /FROM node:18-bookworm AS builder/);
 assert.doesNotMatch(dockerfile, /node:18-bullseye/);
 assert.match(dockerfile, new RegExp(`OHIF_REF=${OHIF_REF}`));
 assert.match(dockerfile, new RegExp(`OHIF_COMMIT=${PIN}`));
+assert.match(dockerfile, /care-patches/);
+assert.match(dockerfile, /v3\.10\.0-\*\.patch/);
+assert.match(dockerfile, /CARE_VIEWER_VERSION=1\.2\.0-p2-radiologist/);
 assert.match(dockerfile, /git fetch --depth 1 origin/);
 assert.match(dockerfile, /inject-care-customization\.sh/);
 assert.match(dockerfile, /HEALTHCHECK/);

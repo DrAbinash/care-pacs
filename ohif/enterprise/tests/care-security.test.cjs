@@ -150,8 +150,11 @@ describe("inject-care-customization.sh", () => {
     const html = fs.readFileSync(path.join(dist, "index.html"), "utf8");
     assert.match(html, /care\/care-security\.js/);
     assert.match(html, /care\/care-bridge\.js/);
+    assert.match(html, /care\/care-measurement\.js/);
+    assert.match(html, /care\/measurement\/care-measurement-adapter\.js/);
     assert.match(html, /CARE_CUSTOMIZATION_BEGIN/);
     assert.ok(fs.existsSync(path.join(dist, "care", "care-bridge.js")));
+    assert.ok(fs.existsSync(path.join(dist, "care", "care-measurement.js")));
     assert.ok(
       fs.existsSync(path.join(dist, "care", "assets", "care-diagnostics-logo.png")),
       "inject must copy CARE logo into dist/care/assets/"
