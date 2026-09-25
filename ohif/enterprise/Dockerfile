@@ -9,12 +9,12 @@ FROM node:18-bookworm AS builder
 # Builder OS is Bookworm for apt reliability only — Node stays 18; OHIF stays frozen.
 ARG OHIF_REF=v3.10.0
 ARG OHIF_COMMIT=0b6e9cba7613dba1df883985d3c821a86b3ba0ff
-ARG CARE_VIEWER_VERSION=1.1.0-p1-reading-room
+ARG CARE_VIEWER_VERSION=1.2.0-p2-radiologist
 
 WORKDIR /opt
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    git ca-certificates python3 make g++ \
+    git ca-certificates python3 make g++ patch \
     && rm -rf /var/lib/apt/lists/*
 
 # Fetch exactly one commit (reproducible; fails if SHA unavailable).
@@ -29,6 +29,19 @@ RUN mkdir ohif \
 
 WORKDIR /opt/ohif
 
+# CARE patches against the frozen commit only — fail the build if they do not apply.
+COPY patches /opt/care-patches
+RUN set -eu; \
+  for p in /opt/care-patches/v3.10.0-*.patch; do \
+    echo "Applying CARE patch $p"; \
+    patch -p1 --forward --dry-run < "$p"; \
+    patch -p1 --forward < "$p"; \
+  done
+
+# CARE hanging protocols (registered via patched getHangingProtocolModule).
+COPY care-customization/hanging-protocols/ohif/careProtocols.js \
+     /opt/ohif/extensions/default/src/hangingprotocols/care/careProtocols.js
+
 RUN yarn install --frozen-lockfile
 
 # CARE runtime config: webpack APP_CONFIG defaults to config/default.js.
@@ -42,6 +55,8 @@ RUN test -f /opt/care-customization/care-bridge.js \
  && test -f /opt/care-customization/care-chrome.js \
  && test -f /opt/care-customization/care-config.js \
  && test -f /opt/care-customization/care-security.js \
+ && test -f /opt/care-customization/care-measurement.js \
+ && test -f /opt/care-customization/measurement/care-measurement-adapter.js \
  && test -f /opt/care-customization/assets/care-diagnostics-logo.png
 
 COPY scripts/inject-care-customization.sh /opt/scripts/inject-care-customization.sh
@@ -68,7 +83,11 @@ RUN test -f /usr/share/nginx/html/care/care-bridge.js \
  && grep -q 'care/care-bridge.js' /usr/share/nginx/html/index.html \
  && grep -q 'CARE Diagnostics Viewer' /usr/share/nginx/html/app-config.js \
  && grep -q "care-diagnostics-logo.png" /usr/share/nginx/html/app-config.js \
- && grep -q "investigationalUseDialog" /usr/share/nginx/html/app-config.js
+ && test -f /usr/share/nginx/html/care/care-measurement.js \
+ && test -f /usr/share/nginx/html/care/measurement/care-measurement-adapter.js \
+ && grep -q 'care/care-measurement.js' /usr/share/nginx/html/index.html \
+ && grep -q "care.mriBrain" /usr/share/nginx/html/app-config.js \
+ && grep -q "ct-subdural" /usr/share/nginx/html/app-config.js
 
 EXPOSE 80
 
