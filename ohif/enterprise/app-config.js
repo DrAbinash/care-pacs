@@ -8,7 +8,7 @@
  *
  * Behavioural policy for this foundation PR:
  *   - Keep whiteLabeling (CARE identity) and relative DICOMweb roots.
- *   - Do NOT suppress investigational-use notices.
+ *   - Suppress the investigational-use dialog for the CARE clinical deployment.
  *   - Do NOT change volume Z-spacing defaults.
  *   - Do NOT enable DICOM upload (baseline had supportsStow; OHIF v3.10 uses
  *     dicomUploadEnabled — left false until a dedicated clinical review).
@@ -24,6 +24,10 @@ window.config = {
   routerBasename: '/',
   showStudyList: true,
   maxNumberOfWebWorkers: 3,
+
+  investigationalUseDialog: {
+    option: 'never',
+  },
 
   // Match working baseline: block dynamic remote configUrl loading.
   dangerouslyUseDynamicConfig: {
