@@ -23,17 +23,19 @@ OHIF extension. Scripts are injected into compiled `index.html`.
 **Configuration + injected CARE scripts** (not a full OHIF React extension/mode).
 Keeps upgrades reviewable and avoids vendoring the OHIF monorepo.
 
-## P0 branding (current)
+## P0 branding + P1 reading room (current)
 
 - Logo: `assets/care-diagnostics-logo.png` — served at `/care/assets/care-diagnostics-logo.png`
 - Header: OHIF `whiteLabeling.createLogoComponentFn` renders the logo (~26px tall)
   plus the product name. Intentionally small so it never covers viewport or toolbars.
 - Investigational-use dialog: `investigationalUseDialog: { option: 'never' }` in
   `app-config.js` (clinical CARE deployment).
+- Reading-room config (P1): WL presets (CT/MR/CR/DX/US), layout 2×1, hotkeys 5–6,
+  CARE chrome **Keys** cheat sheet — all via `app-config.js` / `care-chrome.js`.
 - Upstream remains **frozen**: OHIF `v3.10.0` /
   commit `0b6e9cba7613dba1df883985d3c821a86b3ba0ff`.
 - Builder base: `node:18-bookworm` (OS only; Node stays 18; OHIF stays frozen).
-  Do **not** revert to Bullseye. Do **not** bump Node or OHIF as part of branding work.
+  Do **not** revert to Bullseye. Do **not** bump Node or OHIF for UX polish.
 
 ## Browser globals
 

@@ -3,7 +3,7 @@
  *
  * Build-time static integration (not an OHIF React extension):
  * - Document title
- * - Collapsible About / build-info control (non-obstructive)
+ * - Collapsible About / Shortcuts / build-info control (non-obstructive)
  * - Optional Return-to-CARE (hidden when no safe destination)
  *
  * Depends on: care-security.js, app-config.js (window.config)
@@ -20,6 +20,23 @@
 
   var TITLE = "CARE Diagnostics Viewer";
   var COLLAPSED_KEY = "care.viewer.chromeCollapsed";
+
+  // Reading-room cheat sheet only — no patient data, no UIDs.
+  var SHORTCUTS = [
+    ["1–4", "CT W/L Soft tissue / Lung / Bone / Brain"],
+    ["5–6", "CT W/L Liver / Mediastinum"],
+    ["z", "Zoom tool"],
+    ["+/-/=", "Zoom in / out / fit"],
+    ["r / l", "Rotate CW / CCW"],
+    ["h / v", "Flip H / V"],
+    ["i", "Invert"],
+    ["c", "Cine"],
+    ["↑ / ↓", "Previous / next image"],
+    ["← / →", "Previous / next viewport"],
+    ["PgUp / PgDn", "Previous / next series"],
+    ["Space", "Reset viewport"],
+    ["Esc", "Cancel measurement"],
+  ];
 
   function careConfig() {
     return (window.config && window.config.care) || {};
@@ -76,25 +93,49 @@
       });
   }
 
+  function removePanel(id) {
+    var el = document.getElementById(id);
+    if (el) el.remove();
+  }
+
+  function panelShell(id, titleText) {
+    removePanel(id);
+    var panel = document.createElement("div");
+    panel.id = id;
+    panel.setAttribute("role", "dialog");
+    panel.setAttribute("aria-label", titleText);
+    panel.style.cssText =
+      "position:fixed;z-index:99991;right:12px;bottom:48px;max-width:320px;" +
+      "background:#111827;color:#e5e7eb;border:1px solid #374151;border-radius:6px;" +
+      "padding:12px 14px;font:12px/1.45 system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.35)";
+    var h = document.createElement("div");
+    h.style.cssText = "font-weight:600;margin-bottom:8px;font-size:13px";
+    h.textContent = titleText;
+    panel.appendChild(h);
+    return panel;
+  }
+
+  function closeButton(panel) {
+    var close = document.createElement("button");
+    close.type = "button";
+    close.textContent = "Close";
+    close.style.cssText =
+      "margin-top:8px;background:#1f2937;color:#e5e7eb;border:1px solid #4b5563;" +
+      "border-radius:4px;padding:4px 10px;cursor:pointer";
+    close.addEventListener("click", function () {
+      panel.remove();
+    });
+    return close;
+  }
+
   function showAbout() {
     loadBuildInfo(function (info) {
-      var existing = document.getElementById("care-about-panel");
-      if (existing) {
-        existing.remove();
-        return;
-      }
-      var panel = document.createElement("div");
-      panel.id = "care-about-panel";
-      panel.setAttribute("role", "dialog");
-      panel.setAttribute("aria-label", "About CARE Diagnostics Viewer");
-      panel.style.cssText =
-        "position:fixed;z-index:99999;right:12px;bottom:52px;max-width:340px;" +
-        "background:#111827;color:#e5e7eb;border:1px solid #374151;border-radius:6px;" +
-        "padding:12px 14px;font:12px/1.45 system-ui,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.35)";
+      removePanel("care-shortcuts-panel");
+      var panel = panelShell("care-about-panel", careConfig().viewerName || TITLE);
 
       function row(label, value) {
-        var p = document.createElement("div");
-        p.style.margin = "0 0 6px";
+        var p = document.createElement("p");
+        p.style.cssText = "margin:4px 0";
         var strong = document.createElement("strong");
         strong.textContent = label + ": ";
         p.appendChild(strong);
@@ -103,10 +144,6 @@
         return p;
       }
 
-      var h = document.createElement("div");
-      h.style.cssText = "font-weight:600;margin-bottom:8px;font-size:13px";
-      h.textContent = careConfig().viewerName || TITLE;
-      panel.appendChild(h);
       panel.appendChild(row("CARE viewer", info.careViewerVersion));
       panel.appendChild(row("OHIF ref", info.ohifRef));
       panel.appendChild(
@@ -114,19 +151,36 @@
       );
       if (info.builtAtUtc) panel.appendChild(row("Built", info.builtAtUtc));
       if (info.note) panel.appendChild(row("Note", info.note));
-
-      var close = document.createElement("button");
-      close.type = "button";
-      close.textContent = "Close";
-      close.style.cssText =
-        "margin-top:8px;background:#1f2937;color:#e5e7eb;border:1px solid #4b5563;" +
-        "border-radius:4px;padding:4px 10px;cursor:pointer";
-      close.addEventListener("click", function () {
-        panel.remove();
-      });
-      panel.appendChild(close);
+      panel.appendChild(closeButton(panel));
       document.body.appendChild(panel);
     });
+  }
+
+  function showShortcuts() {
+    removePanel("care-about-panel");
+    var panel = panelShell("care-shortcuts-panel", "Reading shortcuts");
+    var note = document.createElement("p");
+    note.style.cssText = "margin:0 0 8px;opacity:.8";
+    note.textContent = "Defaults from OHIF 3.10 + CARE W/L extras. No patient data.";
+    panel.appendChild(note);
+
+    var table = document.createElement("div");
+    for (var i = 0; i < SHORTCUTS.length; i++) {
+      var row = document.createElement("div");
+      row.style.cssText =
+        "display:grid;grid-template-columns:72px 1fr;gap:8px;padding:2px 0;border-top:1px solid #1f2937";
+      var k = document.createElement("code");
+      k.style.cssText = "color:#93c5fd;font-size:11px";
+      k.textContent = SHORTCUTS[i][0];
+      var v = document.createElement("span");
+      v.textContent = SHORTCUTS[i][1];
+      row.appendChild(k);
+      row.appendChild(v);
+      table.appendChild(row);
+    }
+    panel.appendChild(table);
+    panel.appendChild(closeButton(panel));
+    document.body.appendChild(panel);
   }
 
   function isCollapsed() {
@@ -184,6 +238,15 @@
     aboutBtn.addEventListener("click", showAbout);
     actions.appendChild(aboutBtn);
 
+    var shortcutsBtn = document.createElement("button");
+    shortcutsBtn.type = "button";
+    shortcutsBtn.id = "care-chrome-shortcuts";
+    shortcutsBtn.textContent = "Keys";
+    shortcutsBtn.title = "Reading-room keyboard shortcuts";
+    styleInteractive(shortcutsBtn, "#111827", "#d1d5db", "#374151");
+    shortcutsBtn.addEventListener("click", showShortcuts);
+    actions.appendChild(shortcutsBtn);
+
     var returnUrl = resolveReturnUrl();
     if (returnUrl) {
       var retBtn = document.createElement("button");
@@ -204,8 +267,10 @@
       actions.style.display = collapsed ? "none" : "flex";
       toggle.textContent = collapsed ? "CARE" : "▾";
       toggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
-      var about = document.getElementById("care-about-panel");
-      if (collapsed && about) about.remove();
+      if (collapsed) {
+        removePanel("care-about-panel");
+        removePanel("care-shortcuts-panel");
+      }
     }
 
     toggle.addEventListener("click", function () {

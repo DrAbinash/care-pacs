@@ -19,15 +19,29 @@
  *   OHIF_REF=v3.10.0
  *   OHIF_COMMIT=0b6e9cba7613dba1df883985d3c821a86b3ba0ff
  *
+ * P1 reading-room UX (config-only, no OHIF upgrade):
+ *   - CARE-tuned window/level presets for CT / MR / CR / DX / US
+ *   - Common layout presets including 2×1 compare
+ *   - Extra W/L hotkeys 5–6 (liver, mediastinum) via $push (defaults kept)
+ *
  * API (OHIF v3.10 / that commit only):
  *   - Global: window.config
  *   - whiteLabeling.createLogoComponentFn(React[, props]) → React node
+ *   - customizationService: immutability-helper overrides ($set / $push)
  *   - dataSources: @ohif/extension-default.dataSourcesModule.dicomweb
  */
 window.config = {
   routerBasename: '/',
   showStudyList: true,
   maxNumberOfWebWorkers: 3,
+  showLoadingIndicator: true,
+  showCPUFallbackMessage: true,
+  showWarningMessageForCrossOrigin: true,
+  maxNumRequests: {
+    interaction: 100,
+    thumbnail: 75,
+    prefetch: 25,
+  },
 
   investigationalUseDialog: {
     option: 'never',
@@ -116,7 +130,89 @@ window.config = {
     },
   ],
 
-  customizationService: {},
+  // OHIF v3.10 global customizations (CustomizationService.addReferences).
+  // Order of CT presets 0–3 matches stock hotkeys 1–4 (soft tissue, lung, bone, brain).
+  customizationService: [
+    {
+      'cornerstone.windowLevelPresets': {
+        $set: {
+          CT: [
+            { id: 'ct-soft-tissue', description: 'Soft tissue', window: '400', level: '40' },
+            { id: 'ct-lung', description: 'Lung', window: '1500', level: '-600' },
+            { id: 'ct-bone', description: 'Bone', window: '2500', level: '480' },
+            { id: 'ct-brain', description: 'Brain', window: '80', level: '40' },
+            { id: 'ct-liver', description: 'Liver', window: '150', level: '90' },
+            { id: 'ct-mediastinum', description: 'Mediastinum', window: '350', level: '50' },
+            { id: 'ct-abdomen', description: 'Abdomen', window: '350', level: '40' },
+            { id: 'ct-stroke', description: 'Stroke / subdural', window: '40', level: '40' },
+          ],
+          MR: [
+            { id: 'mr-brain-t1', description: 'Brain T1', window: '500', level: '250' },
+            { id: 'mr-brain-t2', description: 'Brain T2', window: '350', level: '150' },
+            { id: 'mr-spine', description: 'Spine', window: '400', level: '200' },
+            { id: 'mr-soft-tissue', description: 'Soft tissue', window: '600', level: '300' },
+          ],
+          CR: [
+            { id: 'cr-chest', description: 'Chest XR', window: '2000', level: '500' },
+            { id: 'cr-bone', description: 'Bone XR', window: '2500', level: '500' },
+            { id: 'cr-abdomen', description: 'Abdomen XR', window: '2000', level: '400' },
+          ],
+          DX: [
+            { id: 'dx-chest', description: 'Chest DX', window: '2000', level: '500' },
+            { id: 'dx-bone', description: 'Bone DX', window: '2500', level: '500' },
+            { id: 'dx-abdomen', description: 'Abdomen DX', window: '2000', level: '400' },
+          ],
+          US: [
+            { id: 'us-default', description: 'US default', window: '255', level: '127' },
+            { id: 'us-bright', description: 'US brighter', window: '200', level: '100' },
+            { id: 'us-contrast', description: 'US contrast', window: '180', level: '90' },
+          ],
+        },
+      },
+      'layoutSelector.commonPresets': {
+        $set: [
+          {
+            icon: 'layout-common-1x1',
+            commandOptions: { numRows: 1, numCols: 1 },
+          },
+          {
+            icon: 'layout-common-1x2',
+            commandOptions: { numRows: 1, numCols: 2 },
+          },
+          {
+            icon: 'layout-common-2x1',
+            commandOptions: { numRows: 2, numCols: 1 },
+          },
+          {
+            icon: 'layout-common-2x2',
+            commandOptions: { numRows: 2, numCols: 2 },
+          },
+          {
+            icon: 'layout-common-2x3',
+            commandOptions: { numRows: 2, numCols: 3 },
+          },
+        ],
+      },
+      'ohif.hotkeyBindings': {
+        $push: [
+          {
+            commandName: 'setWindowLevelPreset',
+            commandOptions: { presetName: 'ct-liver', presetIndex: 4 },
+            label: 'W/L Liver',
+            keys: ['5'],
+            isEditable: true,
+          },
+          {
+            commandName: 'setWindowLevelPreset',
+            commandOptions: { presetName: 'ct-mediastinum', presetIndex: 5 },
+            label: 'W/L Mediastinum',
+            keys: ['6'],
+            isEditable: true,
+          },
+        ],
+      },
+    },
+  ],
   extensions: [],
   modes: [],
 

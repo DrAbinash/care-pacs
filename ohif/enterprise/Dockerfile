@@ -9,7 +9,7 @@ FROM node:18-bookworm AS builder
 # Builder OS is Bookworm for apt reliability only — Node stays 18; OHIF stays frozen.
 ARG OHIF_REF=v3.10.0
 ARG OHIF_COMMIT=0b6e9cba7613dba1df883985d3c821a86b3ba0ff
-ARG CARE_VIEWER_VERSION=1.0.1-p0-branding
+ARG CARE_VIEWER_VERSION=1.1.0-p1-reading-room
 
 WORKDIR /opt
 

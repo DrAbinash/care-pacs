@@ -35,9 +35,19 @@ Image tag: `care-ohif-enterprise:v1`.
 - Relative DICOMweb roots remain `/dicom-web` and `/wado` (nginx → Orthanc).
 - ERP bridge stay fail-closed (empty allowlists until configured on the NAS).
 
-**Out of scope for P0:** hanging protocols, custom modes, measurement presets,
-hanging layouts, Cornerstone extension work (P1+). Do not deploy from this PR
-without an explicit NAS rebuild approval.
+## P1 reading-room UX (config + CARE chrome only)
+
+Still on frozen OHIF `v3.10.0` / `0b6e9cba…` and `node:18-bookworm`.
+
+- `customizationService` in `app-config.js`:
+  - CARE-tuned `cornerstone.windowLevelPresets` for **CT / MR / CR / DX / US**
+  - Layout presets including **2×1** compare (`layoutSelector.commonPresets`)
+  - Extra W/L hotkeys **5** (liver) and **6** (mediastinum) via `$push` (stock 1–4 kept)
+- CARE chrome **Keys** button → non-PHI shortcut cheat sheet (`care-chrome.js`)
+- Prefetch / loading indicators via `maxNumRequests` + `showLoadingIndicator`
+
+**Still deferred (P2+):** custom hanging-protocol modules, measurement ↔ ERP sync,
+Cornerstone extensions, OHIF upgrades. Do not deploy without explicit NAS approval.
 
 ## Integration model (important)
 
